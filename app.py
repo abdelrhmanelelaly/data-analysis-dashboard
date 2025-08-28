@@ -78,7 +78,7 @@ fig_time.update_layout(
     hovermode="x unified",
     font=dict(family="Arial", size=12, color="black")
 )
-st.plotly_chart(fig_time, use_container_width=True)
+st.plotly_chart(fig_time, use_container_width=True, config={"staticPlot": True})
 
 # 2. الإيرادات حسب المنتج
 st.subheader("📦 الإيرادات حسب المنتج")
@@ -97,7 +97,7 @@ fig_product.update_layout(
     legend_title_text="المنتج",
     font=dict(family="Arial", size=12, color="black")
 )
-st.plotly_chart(fig_product, use_container_width=True)
+st.plotly_chart(fig_product, use_container_width=True, config={"staticPlot": True})
 
 # 3. الإيرادات حسب المنطقة
 st.subheader("🏙️ الإيرادات حسب المنطقة")
@@ -121,7 +121,7 @@ fig_region.update_layout(
     showlegend=False,
     font=dict(family="Arial", size=12, color="black")
 )
-st.plotly_chart(fig_region, use_container_width=True)
+st.plotly_chart(fig_region, use_container_width=True, config={"staticPlot": True})
 
 # 4 & 5. مقارنات المنتجات والمناطق في علامتي تبويب
 st.subheader("📊 مقارنات تفصيلية")
@@ -150,7 +150,7 @@ with tab1:
         legend_title_text="المنطقة",
         font=dict(family="Arial", size=12, color="black")
     )
-    st.plotly_chart(fig_prod_region, use_container_width=True)
+    st.plotly_chart(fig_prod_region, use_container_width=True, config={"staticPlot": True})
 
 with tab2:
     region_prod_data = filtered_df.groupby(["المنطقة","المنتج"])["الإيرادات"].sum().reset_index()
@@ -175,7 +175,7 @@ with tab2:
         legend_title_text="المنتج",
         font=dict(family="Arial", size=12, color="black")
     )
-    st.plotly_chart(fig_region_prod, use_container_width=True)
+    st.plotly_chart(fig_region_prod, use_container_width=True, config={"staticPlot": True})
 
 # ================== عرض الجدول ==================
 st.subheader("📋 البيانات التفصيلية")
