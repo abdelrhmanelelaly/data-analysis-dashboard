@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# ================== تحميل البيانات ==================
+# تحميل البيانات (مع الكاش)
 @st.cache_data
 def load_data():
     df = pd.read_csv("Dataset.csv")
@@ -13,48 +13,77 @@ def load_data():
 
 df = load_data()
 
-# ================== إعداد الصفحة ==================
+# إعداد الصفحة
 st.set_page_config(
     page_title="لوحة تحليل المبيعات",
     page_icon="📊",
     layout="wide"
 )
 
-st.title("📊 لوحة تحليل المبيعات")
+# عنوان ووصف
+st.markdown("""
+# لوحة تحليل أداء المبيعات 📊
+> منصة تفاعلية لمراجعة إيرادات المنتجات حسب المناطق والفترة الزمنية. استخدم الفلاتر لمزيد من التخصيص.
+""")
 
-# ================== الفلاتر ==================
-col1, col2 = st.columns(2)
+st.divider()
 
-with col1:
+# الفلاتر الجانبية
+with st.sidebar:
+    st.header("🔎 الفلاتر")
     product_filter = st.multiselect("اختر المنتج:", df["المنتج"].unique(), default=df["المنتج"].unique())
-
-with col2:
     region_filter = st.multiselect("اختر المنطقة:", df["المنطقة"].unique(), default=df["المنطقة"].unique())
+    # فلتر تاريخ
+    min_date, max_date = df["التاريخ"].min(), df["التاريخ"].max()
+    date_filter = st.date_input("اختر الفترة:", value=(min_date, max_date), min_value=min_date, max_value=max_date)
 
 # تطبيق الفلاتر
-filtered_df = df[(df["المنتج"].isin(product_filter)) & (df["المنطقة"].isin(region_filter))]
+filtered_df = df[
+    (df["المنتج"].isin(product_filter)) &
+    (df["المنطقة"].isin(region_filter)) &
+    (df["التاريخ"] >= pd.to_datetime(date_filter[0])) &
+    (df["التاريخ"] <= pd.to_datetime(date_filter[1]))
+]
 
-# ================== كروت الملخص ==================
+st.divider()
+
+# كروت المؤشرات الرئيسية
 st.subheader("📌 لمحة سريعة")
-
-kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+kpi1, kpi2, kpi3, kpi4, kpi5, kpi6 = st.columns(6)
 
 with kpi1:
     st.metric("إجمالي الإيرادات", f"{filtered_df['الإيرادات'].sum():,.0f}")
-
 with kpi2:
     st.metric("متوسط الإيرادات", f"{filtered_df['الإيرادات'].mean():,.0f}")
-
 with kpi3:
     st.metric("عدد المنتجات", filtered_df['المنتج'].nunique())
-
 with kpi4:
     st.metric("عدد المناطق", filtered_df['المنطقة'].nunique())
+with kpi5:
+    # أعلى منتج
+    top_product = filtered_df.groupby("المنتج")["الإيرادات"].sum()
+    if not top_product.empty:
+        top_prod_name = top_product.idxmax()
+        top_prod_value = top_product.max()
+        st.metric("🔝 المنتج الأعلى إيرادًا", f"{top_prod_name} ({top_prod_value:,.0f})")
+    else:
+        st.metric("🔝 المنتج الأعلى إيرادًا", "-")
+with kpi6:
+    # أعلى منطقة
+    top_region = filtered_df.groupby("المنطقة")["الإيرادات"].sum()
+    if not top_region.empty:
+        top_region_name = top_region.idxmax()
+        top_region_value = top_region.max()
+        st.metric("🏅 المنطقة الأعلى إيرادًا", f"{top_region_name} ({top_region_value:,.0f})")
+    else:
+        st.metric("🏅 المنطقة الأعلى إيرادًا", "-")
 
-# ================== الرسوم البيانية ==================
+st.divider()
+
+# الألوان الثابتة للرسوم البيانية
 color_palette = px.colors.qualitative.Set2
 
-# 1. الإيرادات بمرور الوقت
+# رسم الإيرادات بمرور الوقت
 st.subheader("📈 الإيرادات بمرور الوقت")
 fig_time = px.line(
     filtered_df, x="التاريخ", y="الإيرادات", color="المنتج", markers=True,
@@ -72,15 +101,15 @@ fig_time.update_layout(
     yaxis_title="الإيرادات",
     plot_bgcolor="white",
     paper_bgcolor="white",
-    yaxis=dict(showgrid=True, gridcolor='lightgray', gridwidth=1),
-    xaxis=dict(showgrid=True, gridcolor='lightgray', gridwidth=1),
+    yaxis=dict(showgrid=True, gridcolor='lightgray', gridwidth=1, zeroline=True, zerolinecolor="gray"),
+    xaxis=dict(showgrid=True, gridcolor='lightgray', gridwidth=1, tickformat='%Y-%m-%d'),
     legend_title_text="المنتج",
     hovermode="x unified",
     font=dict(family="Cairo", size=12, color="black")
 )
 st.plotly_chart(fig_time, use_container_width=True, config={"staticPlot": True})
 
-# 2. الإيرادات حسب المنتج
+# رسم الإيرادات حسب المنتج
 st.subheader("📦 الإيرادات حسب المنتج")
 fig_product = px.pie(
     filtered_df, names="المنتج", values="الإيرادات", hole=0.3,
@@ -99,7 +128,7 @@ fig_product.update_layout(
 )
 st.plotly_chart(fig_product, use_container_width=True, config={"staticPlot": True})
 
-# 3. الإيرادات حسب المنطقة
+# رسم الإيرادات حسب المنطقة
 st.subheader("🏙️ الإيرادات حسب المنطقة")
 region_data = filtered_df.groupby("المنطقة")["الإيرادات"].sum().reset_index()
 fig_region = px.bar(
@@ -117,13 +146,15 @@ fig_region.update_layout(
     yaxis_title="الإيرادات",
     plot_bgcolor="white",
     paper_bgcolor="white",
-    yaxis=dict(range=[0, region_data["الإيرادات"].max() * 1.2], showgrid=True, gridcolor='lightgray'),
+    yaxis=dict(range=[0, region_data["الإيرادات"].max() * 1.1], showgrid=True, gridcolor='lightgray'),
     showlegend=False,
     font=dict(family="Cairo", size=12, color="black")
 )
 st.plotly_chart(fig_region, use_container_width=True, config={"staticPlot": True})
 
-# 4 & 5. مقارنات المنتجات والمناطق في علامتي تبويب
+st.divider()
+
+# علامات التبويب للمقارنات
 st.subheader("📊 مقارنات تفصيلية")
 tab1, tab2 = st.tabs(["مقارنة المنتجات حسب المناطق", "مقارنة المناطق حسب المنتجات"])
 
@@ -146,7 +177,7 @@ with tab1:
         yaxis_title="الإيرادات",
         plot_bgcolor="white",
         paper_bgcolor="white",
-        yaxis=dict(range=[0, prod_region_data["الإيرادات"].max() * 1.2], showgrid=True, gridcolor='lightgray'),
+        yaxis=dict(range=[0, prod_region_data["الإيرادات"].max() * 1.1], showgrid=True, gridcolor='lightgray'),
         legend_title_text="المنطقة",
         font=dict(family="Cairo", size=12, color="black")
     )
@@ -171,12 +202,24 @@ with tab2:
         yaxis_title="الإيرادات",
         plot_bgcolor="white",
         paper_bgcolor="white",
-        yaxis=dict(range=[0, region_prod_data["الإيرادات"].max() * 1.2], showgrid=True, gridcolor='lightgray'),
+        yaxis=dict(range=[0, region_prod_data["الإيرادات"].max() * 1.1], showgrid=True, gridcolor='lightgray'),
         legend_title_text="المنتج",
         font=dict(family="Cairo", size=12, color="black")
     )
     st.plotly_chart(fig_region_prod, use_container_width=True, config={"staticPlot": True})
 
-# ================== عرض الجدول ==================
+st.divider()
+
+# جدول البيانات مع زر تحميل البيانات
 st.subheader("📋 البيانات التفصيلية")
 st.dataframe(filtered_df, use_container_width=True)
+
+st.download_button(
+    label="⬇️ تحميل البيانات المفلترة كملف CSV",
+    data=filtered_df.to_csv(index=False),
+    file_name="المبيعات_المفلترة.csv",
+    mime="text/csv"
+)
+
+st.divider()
+st.caption("برنامج التحليل مقدم بواسطة فريق المبيعات. للاستفسارات يرجى التواصل عبر فريق التحليل.")
