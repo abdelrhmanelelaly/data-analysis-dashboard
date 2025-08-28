@@ -91,7 +91,7 @@ st.divider()
 
 color_palette = px.colors.qualitative.Set2  
 
-st.subheader("📈 الإيرادات بمرور الوقت")  
+
 st.subheader("📈 الإيرادات بمرور الوقت")  
 fig_time = px.line(  
     filtered_df, x="التاريخ", y="الإيرادات", color="المنتج", markers=True,  
@@ -114,7 +114,7 @@ fig_time.update_layout(
     legend_title_text="المنتج",  
     hovermode="x unified",  
     font=dict(family="Cairo", size=12, color="black"),  
-    width=1200  # Increase the chart width (adjust this value as needed)
+    width=100  # Increase the chart width (adjust this value as needed)
 )  
 st.plotly_chart(fig_time, use_container_width=True, config={"staticPlot": True})
 
