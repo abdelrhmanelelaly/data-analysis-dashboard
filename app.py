@@ -187,8 +187,9 @@ with tab2:
 with tab3:
     st.markdown("### 📅 الإيرادات الشهرية لكل منتج")
     monthly_data = filtered_df.copy()
-    monthly_data['الشهر'] = monthly_data['التاريخ'].dt.to_period('M')
+    monthly_data['الشهر'] = monthly_data['التاريخ'].dt.to_period('M').astype(str)  # ✅ تحويل Period إلى string
     monthly_prod = monthly_data.groupby(['الشهر','المنتج'])['الإيرادات'].sum().reset_index()
+
     fig_monthly = px.line(
         monthly_prod, x='الشهر', y='الإيرادات', color='المنتج',
         markers=True, color_discrete_sequence=color_palette,
@@ -216,29 +217,4 @@ with tab3:
 
     st.markdown("### 🏆 أعلى وأقل 5 منتجات من حيث الإيرادات")
     top5 = filtered_df.groupby('المنتج')['الإيرادات'].sum().sort_values(ascending=False).head(5)
-    bottom5 = filtered_df.groupby('المنتج')['الإيرادات'].sum().sort_values(ascending=True).head(5)
-    col_top, col_bottom = st.columns(2)
-    with col_top:
-        st.bar_chart(top5, use_container_width=True)
-        st.caption("أعلى 5 منتجات")
-    with col_bottom:
-        st.bar_chart(bottom5, use_container_width=True)
-        st.caption("أقل 5 منتجات")
-
-st.divider()
-
-# ================== عرض الجدول + زر تحميل ==================
-st.subheader("📋 البيانات التفصيلية")
-st.dataframe(filtered_df, use_container_width=True)
-
-st.download_button(
-    label="⬇️ تحميل البيانات المفلترة (CSV)",
-    data=filtered_df.to_csv(index=False),
-    file_name="المبيعات_المفلترة.csv",
-    mime="text/csv"
-)
-
-st.divider()
-st.caption("""
-برنامج التحليل مقدم بواسطة فريق المبيعات. للاستفسارات يرجى التواصل عبر فريق التحليل أو البريد الإلكتروني.
-""")
+    bottom5 = filtered_df.groupby('المنتج')['الإيرادات'].
