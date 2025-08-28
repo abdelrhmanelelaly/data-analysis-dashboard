@@ -66,10 +66,9 @@ st.plotly_chart(fig_time, use_container_width=True, config={"staticPlot": True})
 st.subheader("🏙️ الإيرادات حسب المنطقة")
 region_data = filtered_df.groupby("المنطقة")["الإيرادات"].sum().reset_index()
 fig_region = px.bar(
-    region_data, x="المنطقة", y="الإيرادات", color="المنطقة", text_auto=True,
+    region_data, x="المنطقة", y="الإيرادات", color="المنطقة",
     color_discrete_sequence=color_palette, title="إجمالي الإيرادات لكل منطقة"
 )
-fig_region.update_traces(textfont_size=14)
 fig_region.update_layout(title_x=0.5, plot_bgcolor="white")
 st.plotly_chart(fig_region, use_container_width=True, config={"staticPlot": True})
 
@@ -81,21 +80,21 @@ fig_product = px.pie(
 fig_product.update_layout(title_x=0.5)
 st.plotly_chart(fig_product, use_container_width=True, config={"staticPlot": True})
 
-# ================== رسمة جديدة: منتج × بلد ==================
+# ================== رسمة جديدة: منتج × منطقة ==================
 st.subheader("📊 مقارنة المنتجات حسب المناطق")
 fig_prod_region = px.bar(
     filtered_df, x="المنتج", y="الإيرادات", color="المنطقة",
-    barmode="group", text_auto=True, color_discrete_sequence=color_palette,
+    barmode="group", color_discrete_sequence=color_palette,
     title="مبيعات كل منتج موزعة على المناطق"
 )
 fig_prod_region.update_layout(title_x=0.5, plot_bgcolor="white")
 st.plotly_chart(fig_prod_region, use_container_width=True, config={"staticPlot": True})
 
-# ================== رسمة جديدة: بلد × منتج ==================
+# ================== رسمة جديدة: منطقة × منتج ==================
 st.subheader("📊 مقارنة المناطق حسب المنتجات")
 fig_region_prod = px.bar(
     filtered_df, x="المنطقة", y="الإيرادات", color="المنتج",
-    barmode="group", text_auto=True, color_discrete_sequence=color_palette,
+    barmode="group", color_discrete_sequence=color_palette,
     title="مبيعات كل منطقة موزعة على المنتجات"
 )
 fig_region_prod.update_layout(title_x=0.5, plot_bgcolor="white")
@@ -104,4 +103,3 @@ st.plotly_chart(fig_region_prod, use_container_width=True, config={"staticPlot":
 # ================== عرض الجدول ==================
 st.subheader("📋 البيانات التفصيلية")
 st.dataframe(filtered_df, use_container_width=True)
-
