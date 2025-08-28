@@ -98,7 +98,7 @@ fig_time = px.line(
     template='plotly_white'  
 )  
 fig_time.update_traces(  
-    line=dict(width=3),  
+    line=dict(width=5),  
     hovertemplate="التاريخ: %{x|%Y-%m-%d}<br>الإيرادات: %{y:,.0f}<br>المنتج: %{customdata}",  
     customdata=filtered_df["المنتج"]  
 )  
