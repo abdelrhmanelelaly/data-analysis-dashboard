@@ -34,6 +34,23 @@ with col2:
 # تطبيق الفلاتر
 filtered_df = df[(df["المنتج"].isin(product_filter)) & (df["المنطقة"].isin(region_filter))]
 
+# ================== كروت الملخص ==================
+st.subheader("📌 لمحة سريعة")
+
+kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+
+with kpi1:
+    st.metric("إجمالي الإيرادات", f"{filtered_df['الإيرادات'].sum():,.0f}")
+
+with kpi2:
+    st.metric("متوسط الإيرادات", f"{filtered_df['الإيرادات'].mean():,.0f}")
+
+with kpi3:
+    st.metric("عدد المنتجات", filtered_df['المنتج'].nunique())
+
+with kpi4:
+    st.metric("عدد المناطق", filtered_df['المنطقة'].nunique())
+
 # ================== الرسوم البيانية ==================
 color_palette = px.colors.qualitative.Set2
 
@@ -87,3 +104,9 @@ st.plotly_chart(fig_region_prod, use_container_width=True, config={"staticPlot":
 # ================== عرض الجدول ==================
 st.subheader("📋 البيانات التفصيلية")
 st.dataframe(filtered_df, use_container_width=True)
+
+# ================== جدول الإحصائيات ==================
+st.subheader("📊 جدول الإحصائيات")
+stats_df = filtered_df.describe().T[["mean", "min", "max", "sum"]].fillna(0)
+stats_df.rename(columns={"mean": "المتوسط", "min": "الحد الأدنى", "max": "الحد الأقصى", "sum": "الإجمالي"}, inplace=True)
+st.dataframe(stats_df, use_container_width=True)
