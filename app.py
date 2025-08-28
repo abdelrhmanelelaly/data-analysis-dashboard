@@ -26,7 +26,7 @@ st.markdown("> منصة تفاعلية لتحليل أداء المنتجات و
 
 st.divider()
 
-# ================== الفلاتر (كما هى أعلى الصفحة) ==================
+# ================== الفلاتر (مكانها الأصلي) ==================
 col1, col2 = st.columns(2)
 
 with col1:
@@ -35,7 +35,7 @@ with col1:
 with col2:
     region_filter = st.multiselect("اختر المنطقة:", df["المنطقة"].unique(), default=df["المنطقة"].unique())
 
-# فلتر تاريخ إضافي (خيارية)
+# فلتر التاريخ (إضافي)
 min_date, max_date = df["التاريخ"].min(), df["التاريخ"].max()
 date_col = st.columns(1)
 with date_col[0]:
@@ -51,23 +51,23 @@ filtered_df = df[
 
 st.divider()
 
-# ================== كروت الملخص + توضيح مضاف ==================
+# ================== كروت الملخص في صفين (٣ و ٣) ==================
 st.subheader("📌 لمحة سريعة")
-kpi1, kpi2, kpi3, kpi4, kpi5, kpi6 = st.columns(6)
 
-with kpi1:
+# صف أول
+kpi_row1 = st.columns(3)
+with kpi_row1[0]:
     st.metric("إجمالي الإيرادات", f"{filtered_df['الإيرادات'].sum():,.0f}")
-
-with kpi2:
+with kpi_row1[1]:
     st.metric("متوسط الإيرادات", f"{filtered_df['الإيرادات'].mean():,.0f}")
-
-with kpi3:
+with kpi_row1[2]:
     st.metric("عدد المنتجات", filtered_df['المنتج'].nunique())
 
-with kpi4:
+# صف ثاني
+kpi_row2 = st.columns(3)
+with kpi_row2[0]:
     st.metric("عدد المناطق", filtered_df['المنطقة'].nunique())
-
-with kpi5:
+with kpi_row2[1]:
     top_product_series = filtered_df.groupby("المنتج")["الإيرادات"].sum()
     if not top_product_series.empty:
         top_prod_name = top_product_series.idxmax()
@@ -75,8 +75,7 @@ with kpi5:
         st.metric("المنتج الأعلى إيرادًا", f"{top_prod_name} ({top_prod_value:,.0f})")
     else:
         st.metric("المنتج الأعلى إيرادًا", "-")
-
-with kpi6:
+with kpi_row2[2]:
     top_region_series = filtered_df.groupby("المنطقة")["الإيرادات"].sum()
     if not top_region_series.empty:
         top_region_name = top_region_series.idxmax()
@@ -161,7 +160,7 @@ st.plotly_chart(fig_region, use_container_width=True, config={"staticPlot": True
 
 st.divider()
 
-# 4 & 5. مقارنات المنتجات والمناطق في علامتي تبويب
+# ================== علامات التبويب للمقارنات ==================
 st.subheader("📊 مقارنات تفصيلية")
 tab1, tab2 = st.tabs(["مقارنة المنتجات حسب المناطق", "مقارنة المناطق حسب المنتجات"])
 
