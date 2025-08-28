@@ -92,13 +92,14 @@ st.divider()
 color_palette = px.colors.qualitative.Set2  
 
 st.subheader("📈 الإيرادات بمرور الوقت")  
+st.subheader("📈 الإيرادات بمرور الوقت")  
 fig_time = px.line(  
     filtered_df, x="التاريخ", y="الإيرادات", color="المنتج", markers=True,  
     color_discrete_sequence=color_palette, title="الإيرادات اليومية حسب المنتج",  
     template='plotly_white'  
 )  
 fig_time.update_traces(  
-    line=dict(width=5),  
+    line=dict(width=3),  
     hovertemplate="التاريخ: %{x|%Y-%m-%d}<br>الإيرادات: %{y:,.0f}<br>المنتج: %{customdata}",  
     customdata=filtered_df["المنتج"]  
 )  
@@ -112,9 +113,10 @@ fig_time.update_layout(
     xaxis=dict(showgrid=True, gridcolor='lightgray', gridwidth=1),  
     legend_title_text="المنتج",  
     hovermode="x unified",  
-    font=dict(family="Cairo", size=12, color="black")  
+    font=dict(family="Cairo", size=12, color="black"),  
+    width=1200  # Increase the chart width (adjust this value as needed)
 )  
-st.plotly_chart(fig_time, use_container_width=True, config={"staticPlot": True})  
+st.plotly_chart(fig_time, use_container_width=True, config={"staticPlot": True})
 
 st.subheader("📦 الإيرادات حسب المنتج")  
 fig_product = px.pie(  
