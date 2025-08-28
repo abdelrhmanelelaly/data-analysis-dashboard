@@ -105,22 +105,3 @@ st.plotly_chart(fig_region_prod, use_container_width=True, config={"staticPlot":
 st.subheader("📋 البيانات التفصيلية")
 st.dataframe(filtered_df, use_container_width=True)
 
-# ================== جدول الإحصائيات ==================
-# ================== جدول الإحصائيات ==================
-st.subheader("📊 جدول الإحصائيات")
-
-# وصف البيانات (إحصائيات أساسية)
-stats_df = filtered_df.describe().T[["mean", "min", "max"]].fillna(0)
-
-# إضافة الإجمالي
-stats_df["sum"] = filtered_df.sum(numeric_only=True)
-
-# تعديل أسماء الأعمدة للغة العربية
-stats_df.rename(columns={
-    "mean": "المتوسط",
-    "min": "الحد الأدنى",
-    "max": "الحد الأقصى",
-    "sum": "الإجمالي"
-}, inplace=True)
-
-st.dataframe(stats_df, use_container_width=True)
