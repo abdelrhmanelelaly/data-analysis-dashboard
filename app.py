@@ -162,8 +162,8 @@ fig_time.update_layout(
     legend_title_text="المنتج",
     hovermode="x unified",
     font=dict(family="Cairo", size=14, color=TEXT_COLOR),  # زيادة حجم الخط
-    width=1200,
-    height=500  # إضافة ارتفاع محدد
+    width=1800,
+    height=600  # إضافة ارتفاع محدد
 )
 st.plotly_chart(fig_time, use_container_width=True, config={"staticPlot": True})
 
