@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
+import plotly.express as px
 
 # ================== تحميل البيانات ==================
 @st.cache_data
@@ -37,24 +36,17 @@ filtered_df = df[(df["المنتج"].isin(product_filter)) & (df["المنطقة
 
 # ================== الرسوم البيانية ==================
 st.subheader("📈 الإيرادات بمرور الوقت")
-fig, ax = plt.subplots(figsize=(10,5))
-sns.lineplot(data=filtered_df, x="التاريخ", y="الإيرادات", hue="المنتج", marker="o", ax=ax)
-ax.set_title("الإيرادات بمرور الوقت")
-st.pyplot(fig)
+fig_time = px.line(filtered_df, x="التاريخ", y="الإيرادات", color="المنتج", markers=True)
+st.plotly_chart(fig_time, use_container_width=True, config={"staticPlot": True})
 
 st.subheader("🏙️ الإيرادات حسب المنطقة")
-fig, ax = plt.subplots(figsize=(8,5))
-region_data = filtered_df.groupby("المنطقة")["الإيرادات"].sum().reset_index()
-sns.barplot(data=region_data, x="المنطقة", y="الإيرادات", hue="المنطقة", dodge=False, ax=ax)
-ax.set_title("الإيرادات حسب المنطقة")
-st.pyplot(fig)
+fig_region = px.bar(filtered_df.groupby("المنطقة")["الإيرادات"].sum().reset_index(),
+                    x="المنطقة", y="الإيرادات", color="المنطقة", text_auto=True)
+st.plotly_chart(fig_region, use_container_width=True, config={"staticPlot": True})
 
 st.subheader("📦 الإيرادات حسب المنتج")
-fig, ax = plt.subplots(figsize=(6,6))
-product_data = filtered_df.groupby("المنتج")["الإيرادات"].sum().reset_index()
-ax.pie(product_data["الإيرادات"], labels=product_data["المنتج"], autopct="%1.1f%%", startangle=90)
-ax.set_title("الإيرادات حسب المنتج")
-st.pyplot(fig)
+fig_product = px.pie(filtered_df, names="المنتج", values="الإيرادات", hole=0.3)
+st.plotly_chart(fig_product, use_container_width=True, config={"staticPlot": True})
 
 # ================== عرض الجدول ==================
 st.subheader("📋 البيانات التفصيلية")
