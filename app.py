@@ -63,15 +63,21 @@ fig_time.update_traces(line=dict(width=3))
 fig_time.update_layout(title_x=0.5, plot_bgcolor="white")
 st.plotly_chart(fig_time, use_container_width=True, config={"staticPlot": True})
 
+# ================== الإيرادات حسب المنطقة مع القيم بالـ k ==================
 st.subheader("🏙️ الإيرادات حسب المنطقة")
 region_data = filtered_df.groupby("المنطقة")["الإيرادات"].sum().reset_index()
 fig_region = px.bar(
     region_data, x="المنطقة", y="الإيرادات", color="المنطقة",
     color_discrete_sequence=color_palette, title="إجمالي الإيرادات لكل منطقة"
 )
+fig_region.update_traces(
+    text=[f"{int(val/1000)}k" for val in region_data["الإيرادات"]],
+    textposition="outside"
+)
 fig_region.update_layout(title_x=0.5, plot_bgcolor="white")
 st.plotly_chart(fig_region, use_container_width=True, config={"staticPlot": True})
 
+# ================== الإيرادات حسب المنتج ==================
 st.subheader("📦 الإيرادات حسب المنتج")
 fig_product = px.pie(
     filtered_df, names="المنتج", values="الإيرادات", hole=0.3,
@@ -80,27 +86,37 @@ fig_product = px.pie(
 fig_product.update_layout(title_x=0.5)
 st.plotly_chart(fig_product, use_container_width=True, config={"staticPlot": True})
 
-# ================== رسمة جديدة: منتج × منطقة ==================
+# ================== مقارنة المنتجات حسب المناطق مع القيم بالـ k ==================
 st.subheader("📊 مقارنة المنتجات حسب المناطق")
+prod_region_data = filtered_df.groupby(["المنتج","المنطقة"])["الإيرادات"].sum().reset_index()
 fig_prod_region = px.bar(
-    filtered_df, x="المنتج", y="الإيرادات", color="المنطقة",
+    prod_region_data, x="المنتج", y="الإيرادات", color="المنطقة",
     barmode="group", color_discrete_sequence=color_palette,
     title="مبيعات كل منتج موزعة على المناطق"
+)
+fig_prod_region.update_traces(
+    text=[f"{int(val/1000)}k" for val in prod_region_data["الإيرادات"]],
+    textposition="outside"
 )
 fig_prod_region.update_layout(title_x=0.5, plot_bgcolor="white")
 st.plotly_chart(fig_prod_region, use_container_width=True, config={"staticPlot": True})
 
-# ================== رسمة جديدة: منطقة × منتج ==================
+# ================== مقارنة المناطق حسب المنتجات مع القيم بالـ k ==================
 st.subheader("📊 مقارنة المناطق حسب المنتجات")
+region_prod_data = filtered_df.groupby(["المنطقة","المنتج"])["الإيرادات"].sum().reset_index()
 fig_region_prod = px.bar(
-    filtered_df, x="المنطقة", y="الإيرادات", color="المنتج",
+    region_prod_data, x="المنطقة", y="الإيرادات", color="المنتج",
     barmode="group", color_discrete_sequence=color_palette,
     title="مبيعات كل منطقة موزعة على المنتجات"
+)
+fig_region_prod.update_traces(
+    text=[f"{int(val/1000)}k" for val in region_prod_data["الإيرادات"]],
+    textposition="outside"
 )
 fig_region_prod.update_layout(title_x=0.5, plot_bgcolor="white")
 st.plotly_chart(fig_region_prod, use_container_width=True, config={"staticPlot": True})
 
-# ================== رسمة جديدة: نسبة الإيرادات لكل منطقة ==================
+# ================== نسبة الإيرادات لكل منطقة ==================
 st.subheader("📊 نسبة الإيرادات حسب المنطقة")
 region_percentage = filtered_df.groupby("المنطقة")["الإيرادات"].sum().reset_index()
 fig_region_pie = px.pie(
