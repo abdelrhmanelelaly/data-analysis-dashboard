@@ -8,6 +8,16 @@ def load_data():
     df["المنتج"] = df["المنتج"].astype(str)  
     df["المنطقة"] = df["المنطقة"].astype(str)  
     df["التاريخ"] = pd.to_datetime(df["التاريخ"])  
+    days_map = {  
+        'Monday': 'الإثنين',  
+        'Tuesday': 'الثلاثاء',  
+        'Wednesday': 'الأربعاء',  
+        'Thursday': 'الخميس',  
+        'Friday': 'الجمعة',  
+        'Saturday': 'السبت',  
+        'Sunday': 'الأحد'  
+    }  
+    df['يوم_الأسبوع'] = df['التاريخ'].dt.day_name().map(days_map)  
     return df  
 
 df = load_data()  
@@ -51,7 +61,13 @@ kpi_row1 = st.columns(3)
 with kpi_row1[0]:  
     st.metric("إجمالي الإيرادات", f"{filtered_df['الإيرادات'].sum():,.0f}")  
 with kpi_row1[1]:  
-    st.metric("متوسط الإيرادات", f"{filtered_df['الإيرادات'].mean():,.0f}")  
+    top_day_series = filtered_df.groupby("يوم_الأسبوع")["الإيرادات"].sum()  
+    if not top_day_series.empty:  
+        top_day_name = top_day_series.idxmax()  
+        top_day_value = top_day_series.max()  
+        st.metric("اليوم الأعلى مبيعًا", f"{top_day_name} ({top_day_value:,.0f})")  
+    else:  
+        st.metric("اليوم الأعلى مبيعًا", "-")  
 with kpi_row1[2]:  
     top_product_series = filtered_df.groupby("المنتج")["الإيرادات"].sum()  
     if not top_product_series.empty:  
@@ -91,7 +107,6 @@ st.divider()
 
 color_palette = px.colors.qualitative.Set2  
 
-
 st.subheader("📈 الإيرادات بمرور الوقت")  
 fig_time = px.line(  
     filtered_df, x="التاريخ", y="الإيرادات", color="المنتج", markers=True,  
@@ -114,9 +129,9 @@ fig_time.update_layout(
     legend_title_text="المنتج",  
     hovermode="x unified",  
     font=dict(family="Cairo", size=12, color="black"),  
-    width=100  # Increase the chart width (adjust this value as needed)
+    width=1200  # Increased chart width
 )  
-st.plotly_chart(fig_time, use_container_width=True, config={"staticPlot": True})
+st.plotly_chart(fig_time, use_container_width=True, config={"staticPlot": True})  
 
 st.subheader("📦 الإيرادات حسب المنتج")  
 fig_product = px.pie(  
@@ -132,7 +147,8 @@ fig_product.update_traces(
 fig_product.update_layout(  
     title_x=0.5,  
     legend_title_text="المنتج",  
-    font=dict(family="Cairo", size=12, color="black")  
+    font=dict(family="Cairo", size=12, color="black"),  
+    width=1200  # Increased chart width
 )  
 st.plotly_chart(fig_product, use_container_width=True, config={"staticPlot": True})  
 
@@ -156,16 +172,17 @@ fig_region.update_layout(
     paper_bgcolor="white",  
     yaxis=dict(range=[0, region_data["الإيرادات"].max() * 1.1], showgrid=True, gridcolor='lightgray'),  
     showlegend=False,  
-    font=dict(family="Cairo", size=12, color="black")  
+    font=dict(family="Cairo", size=12, color="black"),  
+    width=1200  # Increased chart width
 )  
 st.plotly_chart(fig_region, use_container_width=True, config={"staticPlot": True})  
 
 st.divider()  
 
 st.subheader("📊 مقارنات تفصيلية")  
-tab1, tab2 = st.tabs(["مقارنة المنتجات حسب المناطق", "مقارنة المناطق حسب المنتجات"])  
+tabs = st.tabs(["مقارنة المنتجات حسب المناطق", "مقارنة المناطق حسب المنتجات", "مقارنة المنتجات حسب الأيام", "مقارنة المناطق حسب الأيام"])  
 
-with tab1:  
+with tabs[0]:  
     prod_region_data = filtered_df.groupby(["المنتج","المنطقة"])["الإيرادات"].sum().reset_index()  
     fig_prod_region = px.bar(  
         prod_region_data, x="المنتج", y="الإيرادات", color="المنطقة",  
@@ -187,17 +204,18 @@ with tab1:
         paper_bgcolor="white",  
         yaxis=dict(range=[0, prod_region_data["الإيرادات"].max() * 1.1], showgrid=True, gridcolor='lightgray'),  
         legend_title_text="المنطقة",  
-        font=dict(family="Cairo", size=12, color="black")  
+        font=dict(family="Cairo", size=12, color="black"),  
+        width=1200  # Increased chart width
     )  
     st.plotly_chart(fig_prod_region, use_container_width=True, config={"staticPlot": True})  
 
-with tab2:  
+with tabs[1]:  
     region_prod_data = filtered_df.groupby(["المنطقة","المنتج"])["الإيرادات"].sum().reset_index()  
     fig_region_prod = px.bar(  
         region_prod_data, x="المنطقة", y="الإيرادات", color="المنتج",  
         barmode="group", color_discrete_sequence=color_palette,  
         title="مبيعات كل منطقة موزعة على المنتجات",  
-        template='plotly_white'  
+        template=' personally_white'  
     )  
     fig_region_prod.update_traces(  
         hovertemplate="المنطقة: %{x}<br>المنتج: %{customdata}<br>الإيرادات: %{y:,.0f}",  
@@ -213,9 +231,64 @@ with tab2:
         paper_bgcolor="white",  
         yaxis=dict(range=[0, region_prod_data["الإيرادات"].max() * 1.1], showgrid=True, gridcolor='lightgray'),  
         legend_title_text="المنتج",  
-        font=dict(family="Cairo", size=12, color="black")  
+        font=dict(family="Cairo", size=12, color="black"),  
+        width=1200  # Increased chart width
     )  
     st.plotly_chart(fig_region_prod, use_container_width=True, config={"staticPlot": True})  
+
+with tabs[2]:  
+    prod_day_data = filtered_df.groupby(["المنتج","يوم_الأسبوع"])["الإيرادات"].sum().reset_index()  
+    fig_prod_day = px.bar(  
+        prod_day_data, x="المنتج", y="الإيرادات", color="يوم_الأسبوع",  
+        barmode="group", color_discrete_sequence=color_palette,  
+        title="مبيعات كل منتج موزعة على الأيام",  
+        template='plotly_white'  
+    )  
+    fig_prod_day.update_traces(  
+        hovertemplate="المنتج: %{x}<br>يوم الأسبوع: %{customdata}<br>الإيرادات: %{y:,.0f}",  
+        customdata=prod_day_data["يوم_الأسبوع"],  
+        texttemplate='%{y:,.0f}',  
+        textposition='auto'  
+    )  
+    fig_prod_day.update_layout(  
+        title_x=0.5,  
+        xaxis_title="المنتج",  
+        yaxis_title="الإيرادات",  
+        plot_bgcolor="white",  
+        paper_bgcolor="white",  
+        yaxis=dict(range=[0, prod_day_data["الإيرادات"].max() * 1.1], showgrid=True, gridcolor='lightgray'),  
+        legend_title_text="يوم الأسبوع",  
+        font=dict(family="Cairo", size=12, color="black"),  
+        width=1200  # Increased chart width
+    )  
+    st.plotly_chart(fig_prod_day, use_container_width=True, config={"staticPlot": True})  
+
+with tabs[3]:  
+    region_day_data = filtered_df.groupby(["المنطقة","يوم_الأسبوع"])["الإيرادات"].sum().reset_index()  
+    fig_region_day = px.bar(  
+        region_day_data, x="المنطقة", y="الإيرادات", color="يوم_الأسبوع",  
+        barmode="group", color_discrete_sequence=color_palette,  
+        title="مبيعات كل منطقة موزعة على الأيام",  
+        template='plotly_white'  
+    )  
+    fig_region_day.update_traces(  
+        hovertemplate="المنطقة: %{x}<br>يوم الأسبوع: %{customdata}<br>الإيرادات: %{y:,.0f}",  
+        customdata=region_day_data["يوم_الأسبوع"],  
+        texttemplate='%{y:,.0f}',  
+        textposition='auto'  
+    )  
+    fig_region_day.update_layout(  
+        title_x=0.5,  
+        xaxis_title="المنطقة",  
+        yaxis_title="الإيرادات",  
+        plot_bgcolor="white",  
+        paper_bgcolor="white",  
+        yaxis=dict(range=[0, region_day_data["الإيرادات"].max() * 1.1], showgrid=True, gridcolor='lightgray'),  
+        legend_title_text="يوم الأسبوع",  
+        font=dict(family="Cairo", size=12, color="black"),  
+        width=1200  # Increased chart width
+    )  
+    st.plotly_chart(fig_region_day, use_container_width=True, config={"staticPlot": True})  
 
 st.divider()  
 
