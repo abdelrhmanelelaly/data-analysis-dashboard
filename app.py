@@ -1,60 +1,51 @@
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import numpy as np
-from datetime import datetime, timedelta
+# في بداية الكود بعد تحميل المكتبات
+import base64
+from io import BytesIO
 
-# ================== إعداد الصفحة ==================
-st.set_page_config(
-    page_title="لوحة تحليل المبيعات الذكية",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# ================== تخصيص الشكل العام ==================
+# إضافة CSS مخصصة
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
-    
-    .main-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2rem;
-        border-radius: 15px;
-        margin-bottom: 2rem;
-        text-align: center;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Tajawal', sans-serif !important;
+        direction: rtl;
     }
-    
-    .main-title {
-        font-family: 'Cairo', sans-serif;
-        font-size: 3rem;
-        font-weight: 900;
-        color: white;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        margin: 0;
+
+    .stApp {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
     }
-    
-    .subtitle {
-        font-family: 'Cairo', sans-serif;
-        font-size: 1.2rem;
-        color: rgba(255,255,255,0.9);
-        margin-top: 0.5rem;
+
+    .st-bf {
+        background-color: rgba(255, 255, 255, 0.8);
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-    
-    .metric-container {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        padding: 1.5rem;
-        border-radius: 15px;
-        text-align: center;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        margin: 0.5rem 0;
-        transition: transform 0.3s ease;
+
+    .st-df {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-    
-    .metric-container:hover {
+
+    .stMetric {
+        background-color: white;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: #2c3e50;
+    }
+
+    .stPlotlyChart {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+</style>
+""", unsafe_allow_html=True)    .metric-container:hover {
         transform: translateY(-5px);
     }
     
