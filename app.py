@@ -36,6 +36,10 @@ date_col = st.columns(1)
 with date_col[0]:  
     date_filter = st.date_input("الفترة الزمنية:", value=(min_date, max_date), min_value=min_date, max_value=max_date)  
 
+# إضافة خيار التجميع الزمني
+time_aggregation = st.selectbox("اختر التجميع الزمني:", ["يومي", "أسبوعي", "شهري"])  
+
+# تصفية البيانات
 filtered_df = df[  
     (df["المنتج"].isin(product_filter)) &  
     (df["المنطقة"].isin(region_filter)) &  
@@ -43,15 +47,27 @@ filtered_df = df[
     (df["التاريخ"] <= pd.to_datetime(date_filter[1]))  
 ]  
 
+# تجميع البيانات حسب الخيار المختار
+if time_aggregation == "أسبوعي":  
+    filtered_df['التاريخ_مجمع'] = filtered_df['التاريخ'].dt.to_period('W').apply(lambda r: r.start_time)  
+    time_data = filtered_df.groupby(['التاريخ_مجمع', 'المنتج'])['الإيرادات'].sum().reset_index()  
+    time_data.rename(columns={'التاريخ_مجمع': 'التاريخ'}, inplace=True)  
+elif time_aggregation == "شهري":  
+    filtered_df['التاريخ_مجمع'] = filtered_df['التاريخ'].dt.to_period('M').apply(lambda r: r.start_time)  
+    time_data = filtered_df.groupby(['التاريخ_مجمع', 'المنتج'])['الإيرادات'].sum().reset_index()  
+    time_data.rename(columns={'التاريخ_مجمع': 'التاريخ'}, inplace=True)  
+else:  
+    time_data = filtered_df  
+
 st.divider()  
 
 st.subheader("📌 لمحة سريعة")  
 
 kpi_row1 = st.columns(3)  
 with kpi_row1[0]:  
-    st.metric("إجمالي الإيرادات", f"{filtered_df['الإيرادات'].sum():,.0f}")  
+    st.metric("إجمالي الإيرادات", f"{filtered_df['الإيرادات'].sum():,.0f} ريال")  
 with kpi_row1[1]:  
-    st.metric("متوسط الإيرادات", f"{filtered_df['الإيرادات'].mean():,.0f}")  
+    st.metric("متوسط الإيرادات", f"{filtered_df['الإيرادات'].mean():,.0f} ريال")  
 with kpi_row1[2]:  
     st.metric("عدد المنتجات", filtered_df['المنتج'].nunique())  
 
@@ -63,7 +79,7 @@ with kpi_row2[1]:
     if not top_product_series.empty:  
         top_prod_name = top_product_series.idxmax()  
         top_prod_value = top_product_series.max()  
-        st.metric("المنتج الأعلى إيرادًا", f"{top_prod_name} ({top_prod_value:,.0f})")  
+        st.metric("المنتج الأعلى إيرادًا", f"{top_prod_name} ({top_prod_value:,.0f} ريال)")  
     else:  
         st.metric("المنتج الأعلى إيرادًا", "-")  
 with kpi_row2[2]:  
@@ -71,57 +87,74 @@ with kpi_row2[2]:
     if not top_region_series.empty:  
         top_region_name = top_region_series.idxmax()  
         top_region_value = top_region_series.max()  
-        st.metric("المنطقة الأعلى إيرادًا", f"{top_region_name} ({top_region_value:,.0f})")  
+        st.metric("المنطقة الأعلى إيرادًا", f"{top_region_name} ({top_region_value:,.0f} ريال)")  
     else:  
         st.metric("المنطقة الأعلى إيرادًا", "-")  
 
 st.divider()  
 
-color_palette = px.colors.qualitative.Set2  
+# لوحة ألوان ناعمة ومتناسقة
+color_palette = px.colors.qualitative.Pastel  
 
+# الإيرادات بمرور الوقت
 st.subheader("📈 الإيرادات بمرور الوقت")  
 fig_time = px.line(  
-    filtered_df, x="التاريخ", y="الإيرادات", color="المنتج", markers=True,  
-    color_discrete_sequence=color_palette, title="الإيرادات اليومية حسب المنتج",  
+    time_data, x="التاريخ", y="الإيرادات", color="المنتج", markers=True,  
+    color_discrete_sequence=color_palette, title=f"الإيرادات {time_aggregation} حسب المنتج",  
     template='plotly_white'  
 )  
 fig_time.update_traces(  
-    line=dict(width=3),  
-    hovertemplate="التاريخ: %{x|%Y-%m-%d}<br>الإيرادات: %{y:,.0f}<br>المنتج: %{customdata}",  
-    customdata=filtered_df["المنتج"]  
+    line=dict(width=2.5),  
+    marker=dict(size=6, opacity=0.7),  
+    hovertemplate="التاريخ: %{x|%Y-%m-%d}<br>المنتج: %{customdata}<br>الإيرادات: %{y:,.0f} ريال",  
+    customdata=time_data["المنتج"]  
 )  
 fig_time.update_layout(  
     title_x=0.5,  
     xaxis_title="التاريخ",  
-    yaxis_title="الإيرادات",  
+    yaxis_title="الإيرادات (ريال)",  
     plot_bgcolor="white",  
     paper_bgcolor="white",  
-    yaxis=dict(showgrid=True, gridcolor='lightgray', gridwidth=1, zeroline=True, zerolinecolor="gray"),  
-    xaxis=dict(showgrid=True, gridcolor='lightgray', gridwidth=1),  
+    yaxis=dict(showgrid=True, gridcolor='rgba(200, 200, 200, 0.3)', zeroline=True, zerolinecolor="gray"),  
+    xaxis=dict(showgrid=False, title_font=dict(size=14, family="Cairo"), tickfont=dict(size=12, family="Cairo")),  
     legend_title_text="المنتج",  
+    legend=dict(font=dict(size=12, family="Cairo"), bgcolor="rgba(255, 255, 255, 0.8)", bordercolor="gray", borderwidth=1),  
     hovermode="x unified",  
-    font=dict(family="Cairo", size=12, color="black")  
+    font=dict(family="Cairo", size=14, color="black"),  
+    title_font=dict(size=18, family="Cairo"),  
+    xaxis_rangeslider_visible=True,  
+    xaxis_rangeselector=dict(buttons=list([  
+        dict(count=7, label="أسبوع", step="day", stepmode="backward"),  
+        dict(count=1, label="شهر", step="month", stepmode="backward"),  
+        dict(count=6, label="6 أشهر", step="month", stepmode="backward"),  
+        dict(step="all", label="الكل")  
+    ]))  
 )  
-st.plotly_chart(fig_time, use_container_width=True, config={"staticPlot": True})  
+st.plotly_chart(fig_time, use_container_width=True, config={"staticPlot": False})  
 
+# الإيرادات حسب المنتج
 st.subheader("📦 الإيرادات حسب المنتج")  
 fig_product = px.pie(  
-    filtered_df, names="المنتج", values="الإيرادات", hole=0.3,  
+    filtered_df.groupby("المنتج")["الإيرادات"].sum().reset_index(), names="المنتج", values="الإيرادات", hole=0.3,  
     color_discrete_sequence=color_palette, title="نسبة الإيرادات حسب المنتج",  
     template='plotly_white'  
 )  
 fig_product.update_traces(  
-    hovertemplate="المنتج: %{label}<br>الإيرادات: %{value:,.0f}<br>النسبة: %{percent}",  
+    hovertemplate="المنتج: %{label}<br>الإيرادات: %{value:,.0f} ريال<br>النسبة: %{percent}",  
     pull=[0.05] * len(filtered_df['المنتج'].unique()),  
-    textinfo='percent+label'  
+    textinfo='percent+label',  
+    textfont=dict(size=12, family="Cairo")  
 )  
 fig_product.update_layout(  
     title_x=0.5,  
     legend_title_text="المنتج",  
-    font=dict(family="Cairo", size=12, color="black")  
+    legend=dict(font=dict(size=12, family="Cairo"), bgcolor="rgba(255, 255, 255, 0.8)", bordercolor="gray", borderwidth=1),  
+    font=dict(family="Cairo", size=14, color="black"),  
+    title_font=dict(size=18, family="Cairo")  
 )  
-st.plotly_chart(fig_product, use_container_width=True, config={"staticPlot": True})  
+st.plotly_chart(fig_product, use_container_width=True, config={"staticPlot": False})  
 
+# الإيرادات حسب المنطقة
 st.subheader("🏙️ الإيرادات حسب المنطقة")  
 region_data = filtered_df.groupby("المنطقة")["الإيرادات"].sum().reset_index()  
 fig_region = px.bar(  
@@ -130,20 +163,23 @@ fig_region = px.bar(
     template='plotly_white'  
 )  
 fig_region.update_traces(  
-    hovertemplate="المنطقة: %{x}<br>الإيرادات: %{y:,.0f}",  
-    textposition='none'  
+    hovertemplate="المنطقة: %{x}<br>الإيرادات: %{y:,.0f} ريال",  
+    texttemplate='%{y:,.0f}',  
+    textposition='auto'  
 )  
 fig_region.update_layout(  
     title_x=0.5,  
     xaxis_title="المنطقة",  
-    yaxis_title="الإيرادات",  
+    yaxis_title="الإيرادات (ريال)",  
     plot_bgcolor="white",  
     paper_bgcolor="white",  
-    yaxis=dict(range=[0, region_data["الإيرادات"].max() * 1.1], showgrid=True, gridcolor='lightgray'),  
+    yaxis=dict(range=[0, region_data["الإيرادات"].max() * 1.1], showgrid=True, gridcolor='rgba(200, 200, 200, 0.3)'),  
+    xaxis=dict(title_font=dict(size=14, family="Cairo"), tickfont=dict(size=12, family="Cairo")),  
     showlegend=False,  
-    font=dict(family="Cairo", size=12, color="black")  
+    font=dict(family="Cairo", size=14, color="black"),  
+    title_font=dict(size=18, family="Cairo")  
 )  
-st.plotly_chart(fig_region, use_container_width=True, config={"staticPlot": True})  
+st.plotly_chart(fig_region, use_container_width=True, config={"staticPlot": False})  
 
 st.divider()  
 
@@ -159,21 +195,25 @@ with tab1:
         template='plotly_white'  
     )  
     fig_prod_region.update_traces(  
-        hovertemplate="المنتج: %{x}<br>المنطقة: %{customdata}<br>الإيرادات: %{y:,.0f}",  
+        hovertemplate="المنتج: %{x}<br>المنطقة: %{customdata}<br>الإيرادات: %{y:,.0f} ريال",  
         customdata=prod_region_data["المنطقة"],  
-        textposition='none'  
+        texttemplate='%{y:,.0f}',  
+        textposition='auto'  
     )  
     fig_prod_region.update_layout(  
         title_x=0.5,  
         xaxis_title="المنتج",  
-        yaxis_title="الإيرادات",  
+        yaxis_title="الإيرادات (ريال)",  
         plot_bgcolor="white",  
         paper_bgcolor="white",  
-        yaxis=dict(range=[0, prod_region_data["الإيرادات"].max() * 1.1], showgrid=True, gridcolor='lightgray'),  
+        yaxis=dict(range=[0, prod_region_data["الإيرادات"].max() * 1.1], showgrid=True, gridcolor='rgba(200, 200, 200, 0.3)'),  
+        xaxis=dict(title_font=dict(size=14, family="Cairo"), tickfont=dict(size=12, family="Cairo")),  
         legend_title_text="المنطقة",  
-        font=dict(family="Cairo", size=12, color="black")  
+        legend=dict(font=dict(size=12, family="Cairo"), bgcolor="rgba(255, 255, 255, 0.8)", bordercolor="gray", borderwidth=1),  
+        font=dict(family="Cairo", size=14, color="black"),  
+        title_font=dict(size=18, family="Cairo")  
     )  
-    st.plotly_chart(fig_prod_region, use_container_width=True, config={"staticPlot": True})  
+    st.plotly_chart(fig_prod_region, use_container_width=True, config={"staticPlot": False})  
 
 with tab2:  
     region_prod_data = filtered_df.groupby(["المنطقة","المنتج"])["الإيرادات"].sum().reset_index()  
@@ -184,21 +224,25 @@ with tab2:
         template='plotly_white'  
     )  
     fig_region_prod.update_traces(  
-        hovertemplate="المنطقة: %{x}<br>المنتج: %{customdata}<br>الإيرادات: %{y:,.0f}",  
+        hovertemplate="المنطقة: %{x}<br>المنتج: %{customdata}<br>الإيرادات: %{y:,.0f} ريال",  
         customdata=region_prod_data["المنتج"],  
-        textposition='none'  
+        texttemplate='%{y:,.0f}',  
+        textposition='auto'  
     )  
     fig_region_prod.update_layout(  
         title_x=0.5,  
         xaxis_title="المنطقة",  
-        yaxis_title="الإيرادات",  
+        yaxis_title="الإيرادات (ريال)",  
         plot_bgcolor="white",  
         paper_bgcolor="white",  
-        yaxis=dict(range=[0, region_prod_data["الإيرادات"].max() * 1.1], showgrid=True, gridcolor='lightgray'),  
+        yaxis=dict(range=[0, region_prod_data["الإيرادات"].max() * 1.1], showgrid=True, gridcolor='rgba(200, 200, 200, 0.3)'),  
+        xaxis=dict(title_font=dict(size=14, family="Cairo"), tickfont=dict(size=12, family="Cairo")),  
         legend_title_text="المنتج",  
-        font=dict(family="Cairo", size=12, color="black")  
+        legend=dict(font=dict(size=12, family="Cairo"), bgcolor="rgba(255, 255, 255, 0.8)", bordercolor="gray", borderwidth=1),  
+        font=dict(family="Cairo", size=14, color="black"),  
+        title_font=dict(size=18, family="Cairo")  
     )  
-    st.plotly_chart(fig_region_prod, use_container_width=True, config={"staticPlot": True})  
+    st.plotly_chart(fig_region_prod, use_container_width=True, config={"staticPlot": False})  
 
 st.divider()  
 
