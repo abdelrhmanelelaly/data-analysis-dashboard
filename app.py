@@ -58,20 +58,4 @@ st.pyplot(fig)
 
 # ================== عرض الجدول ==================
 st.subheader("📋 البيانات التفصيلية")
-st.dataframe(filtered_df, use_container_width=True)# ================== الرسوم البيانية ==================
-st.subheader("📈 الإيرادات بمرور الوقت")
-fig_time = px.line(filtered_df, x="التاريخ", y="الإيرادات", color="المنتج", markers=True)
-st.plotly_chart(fig_time, use_container_width=True)
-
-st.subheader("🏙️ الإيرادات حسب المنطقة")
-fig_region = px.bar(filtered_df.groupby("المنطقة")["الإيرادات"].sum().reset_index(),
-                    x="المنطقة", y="الإيرادات", color="المنطقة", text_auto=True)
-st.plotly_chart(fig_region, use_container_width=True)
-
-st.subheader("📦 الإيرادات حسب المنتج")
-fig_product = px.pie(filtered_df, names="المنتج", values="الإيرادات", hole=0.3)
-st.plotly_chart(fig_product, use_container_width=True)
-
-# ================== عرض الجدول ==================
-st.subheader("📋 البيانات التفصيلية")
 st.dataframe(filtered_df, use_container_width=True)
