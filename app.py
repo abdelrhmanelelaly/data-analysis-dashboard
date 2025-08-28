@@ -1,11 +1,139 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import numpy as np
+from datetime import datetime, timedelta
+
+# ================== إعداد الصفحة ==================
+st.set_page_config(
+    page_title="لوحة تحليل المبيعات الذكية",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# ================== تخصيص الشكل العام ==================
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+    
+    .main-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    
+    .main-title {
+        font-family: 'Cairo', sans-serif;
+        font-size: 3rem;
+        font-weight: 900;
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        margin: 0;
+    }
+    
+    .subtitle {
+        font-family: 'Cairo', sans-serif;
+        font-size: 1.2rem;
+        color: rgba(255,255,255,0.9);
+        margin-top: 0.5rem;
+    }
+    
+    .metric-container {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        padding: 1.5rem;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        margin: 0.5rem 0;
+        transition: transform 0.3s ease;
+    }
+    
+    .metric-container:hover {
+        transform: translateY(-5px);
+    }
+    
+    .metric-value {
+        font-family: 'Cairo', sans-serif;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+        margin: 0;
+    }
+    
+    .metric-label {
+        font-family: 'Cairo', sans-serif;
+        font-size: 1rem;
+        color: rgba(255,255,255,0.9);
+        margin-top: 0.5rem;
+    }
+    
+    .section-header {
+        font-family: 'Cairo', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 2rem 0 1rem 0;
+        padding: 1rem;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        background-size: 100% 3px;
+        background-repeat: no-repeat;
+        background-position: bottom;
+        border-radius: 10px 10px 0 0;
+    }
+    
+    .stApp {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        font-family: 'Cairo', sans-serif;
+    }
+    
+    .chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        margin: 1rem 0;
+    }
+    
+    .filter-container {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # ================== تحميل البيانات ==================
 @st.cache_data
 def load_data():
-    df = pd.read_csv("Dataset.csv")
+    # إنشاء بيانات تجريبية إذا لم يكن الملف موجوداً
+    try:
+        df = pd.read_csv("Dataset.csv")
+    except FileNotFoundError:
+        # إنشاء بيانات تجريبية
+        dates = pd.date_range(start='2024-01-01', end='2024-12-31', freq='D')
+        products = ['هواتف ذكية', 'أجهزة لوحية', 'حاسوب محمول', 'سماعات', 'إكسسوارات']
+        regions = ['الرياض', 'جدة', 'الدمام', 'مكة', 'المدينة']
+        
+        np.random.seed(42)
+        data = []
+        for date in dates[:100]:  # أول 100 يوم
+            for _ in range(np.random.randint(1, 4)):
+                data.append({
+                    'التاريخ': date,
+                    'المنتج': np.random.choice(products),
+                    'المنطقة': np.random.choice(regions),
+                    'الإيرادات': np.random.randint(1000, 50000)
+                })
+        df = pd.DataFrame(data)
+    
     df["المنتج"] = df["المنتج"].astype(str)
     df["المنطقة"] = df["المنطقة"].astype(str)
     df["التاريخ"] = pd.to_datetime(df["التاريخ"])
@@ -13,93 +141,216 @@ def load_data():
 
 df = load_data()
 
-# ================== إعداد الصفحة ==================
-st.set_page_config(
-    page_title="لوحة تحليل المبيعات",
-    page_icon="📊",
-    layout="wide"
-)
-
-st.title("📊 لوحة تحليل المبيعات")
+# ================== العنوان الرئيسي ==================
+st.markdown("""
+<div class="main-header">
+    <h1 class="main-title">📊 لوحة تحليل المبيعات الذكية</h1>
+    <p class="subtitle">نظام تحليل متقدم لبيانات المبيعات والإيرادات</p>
+</div>
+""", unsafe_allow_html=True)
 
 # ================== الفلاتر ==================
-col1, col2 = st.columns(2)
+st.markdown('<div class="filter-container">', unsafe_allow_html=True)
+col1, col2, col3 = st.columns(3)
 
 with col1:
-    product_filter = st.multiselect("اختر المنتج:", df["المنتج"].unique(), default=df["المنتج"].unique())
+    product_filter = st.multiselect(
+        "🎯 اختر المنتج:", 
+        df["المنتج"].unique(), 
+        default=df["المنتج"].unique()
+    )
 
 with col2:
-    region_filter = st.multiselect("اختر المنطقة:", df["المنطقة"].unique(), default=df["المنطقة"].unique())
+    region_filter = st.multiselect(
+        "🏙️ اختر المنطقة:", 
+        df["المنطقة"].unique(), 
+        default=df["المنطقة"].unique()
+    )
+
+with col3:
+    date_range = st.date_input(
+        "📅 فترة التحليل:",
+        value=(df["التاريخ"].min(), df["التاريخ"].max()),
+        min_value=df["التاريخ"].min(),
+        max_value=df["التاريخ"].max()
+    )
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 # تطبيق الفلاتر
-filtered_df = df[(df["المنتج"].isin(product_filter)) & (df["المنطقة"].isin(region_filter))]
+filtered_df = df[
+    (df["المنتج"].isin(product_filter)) & 
+    (df["المنطقة"].isin(region_filter))
+]
+
+if len(date_range) == 2:
+    filtered_df = filtered_df[
+        (filtered_df["التاريخ"] >= pd.to_datetime(date_range[0])) &
+        (filtered_df["التاريخ"] <= pd.to_datetime(date_range[1]))
+    ]
 
 # ================== كروت الملخص ==================
-st.subheader("📌 لمحة سريعة")
+st.markdown('<h2 class="section-header">📌 المؤشرات الرئيسية</h2>', unsafe_allow_html=True)
 
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 
-with kpi1:
-    st.metric("إجمالي الإيرادات", f"{filtered_df['الإيرادات'].sum():,.0f}")
+metrics_data = [
+    ("إجمالي الإيرادات", f"{filtered_df['الإيرادات'].sum():,.0f} ريال"),
+    ("متوسط الإيرادات", f"{filtered_df['الإيرادات'].mean():,.0f} ريال"),
+    ("عدد المنتجات", f"{filtered_df['المنتج'].nunique()} منتج"),
+    ("عدد المناطق", f"{filtered_df['المنطقة'].nunique()} منطقة")
+]
 
-with kpi2:
-    st.metric("متوسط الإيرادات", f"{filtered_df['الإيرادات'].mean():,.0f}")
+for col, (label, value) in zip([kpi1, kpi2, kpi3, kpi4], metrics_data):
+    with col:
+        st.markdown(f"""
+        <div class="metric-container">
+            <div class="metric-value">{value.split()[0]}</div>
+            <div class="metric-label">{label}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-with kpi3:
-    st.metric("عدد المنتجات", filtered_df['المنتج'].nunique())
+# ================== الرسوم البيانية ثلاثية الأبعاد ==================
 
-with kpi4:
-    st.metric("عدد المناطق", filtered_df['المنطقة'].nunique())
+# إعدادات الألوان المتقدمة
+colors_3d = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8']
 
-# ================== الرسوم البيانية ==================
-color_palette = px.colors.qualitative.Set2
+st.markdown('<h2 class="section-header">📈 الإيرادات بمرور الوقت (ثلاثي الأبعاد)</h2>', unsafe_allow_html=True)
+st.markdown('<div class="chart-container">', unsafe_allow_html=True)
 
-st.subheader("📈 الإيرادات بمرور الوقت")
-fig_time = px.line(
-    filtered_df, x="التاريخ", y="الإيرادات", color="المنتج", markers=True,
-    color_discrete_sequence=color_palette, title="الإيرادات اليومية حسب المنتج"
+# رسم ثلاثي الأبعاد للإيرادات عبر الزمن
+fig_3d_time = go.Figure()
+
+for i, product in enumerate(filtered_df['المنتج'].unique()):
+    product_data = filtered_df[filtered_df['المنتج'] == product]
+    daily_data = product_data.groupby('التاريخ')['الإيرادات'].sum().reset_index()
+    
+    fig_3d_time.add_trace(go.Scatter3d(
+        x=daily_data['التاريخ'],
+        y=[product] * len(daily_data),
+        z=daily_data['الإيرادات'],
+        mode='markers+lines',
+        marker=dict(
+            size=8,
+            color=colors_3d[i % len(colors_3d)],
+            symbol='circle',
+            opacity=0.8
+        ),
+        line=dict(
+            color=colors_3d[i % len(colors_3d)],
+            width=4
+        ),
+        name=product,
+        text=[f'{product}<br>التاريخ: {date}<br>الإيرادات: {revenue:,}' 
+              for date, revenue in zip(daily_data['التاريخ'], daily_data['الإيرادات'])],
+        hovertemplate='%{text}<extra></extra>'
+    ))
+
+fig_3d_time.update_layout(
+    scene=dict(
+        xaxis_title='التاريخ',
+        yaxis_title='المنتج',
+        zaxis_title='الإيرادات (ريال)',
+        bgcolor='rgb(240,240,240)',
+        camera=dict(eye=dict(x=1.25, y=1.25, z=1.25))
+    ),
+    title={
+        'text': 'تطور الإيرادات عبر الزمن والمنتجات',
+        'x': 0.5,
+        'font': {'family': 'Cairo', 'size': 20, 'color': '#2c3e50'}
+    },
+    font=dict(family='Cairo'),
+    height=600,
+    margin=dict(l=0, r=0, t=60, b=0)
 )
-fig_time.update_traces(line=dict(width=3))
-fig_time.update_layout(title_x=0.5, plot_bgcolor="white")
-st.plotly_chart(fig_time, use_container_width=True, config={"staticPlot": True})
 
-st.subheader("🏙️ الإيرادات حسب المنطقة")
-region_data = filtered_df.groupby("المنطقة")["الإيرادات"].sum().reset_index()
-fig_region = px.bar(
-    region_data, x="المنطقة", y="الإيرادات", color="المنطقة",
-    color_discrete_sequence=color_palette, title="إجمالي الإيرادات لكل منطقة"
+st.plotly_chart(fig_3d_time, use_container_width=True)
+st.markdown('</div>', unsafe_allow_html=True)
+
+# ================== رسم ثلاثي الأبعاد للمناطق والمنتجات ==================
+st.markdown('<h2 class="section-header">🏙️ تحليل المناطق والمنتجات (ثلاثي الأبعاد)</h2>', unsafe_allow_html=True)
+st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+
+# إعداد البيانات للرسم ثلاثي الأبعاد
+pivot_data = filtered_df.groupby(['المنطقة', 'المنتج'])['الإيرادات'].sum().reset_index()
+
+fig_3d_surface = go.Figure()
+
+# إنشاء surface plot
+regions = pivot_data['المنطقة'].unique()
+products = pivot_data['المنتج'].unique()
+
+z_matrix = []
+for region in regions:
+    row = []
+    for product in products:
+        revenue = pivot_data[
+            (pivot_data['المنطقة'] == region) & 
+            (pivot_data['المنتج'] == product)
+        ]['الإيرادات'].sum()
+        row.append(revenue)
+    z_matrix.append(row)
+
+fig_3d_surface.add_trace(go.Surface(
+    z=z_matrix,
+    x=list(range(len(products))),
+    y=list(range(len(regions))),
+    colorscale='Viridis',
+    opacity=0.8,
+    contours_z=dict(show=True, usecolormap=True, highlightcolor="limegreen", project_z=True)
+))
+
+fig_3d_surface.update_layout(
+    scene=dict(
+        xaxis=dict(
+            title='المنتجات',
+            tickmode='array',
+            tickvals=list(range(len(products))),
+            ticktext=products
+        ),
+        yaxis=dict(
+            title='المناطق',
+            tickmode='array',
+            tickvals=list(range(len(regions))),
+            ticktext=regions
+        ),
+        zaxis_title='الإيرادات (ريال)',
+        bgcolor='rgb(240,240,240)',
+        camera=dict(eye=dict(x=1.5, y=1.5, z=1.5))
+    ),
+    title={
+        'text': 'خريطة الإيرادات ثلاثية الأبعاد',
+        'x': 0.5,
+        'font': {'family': 'Cairo', 'size': 20, 'color': '#2c3e50'}
+    },
+    font=dict(family='Cairo'),
+    height=600
 )
-fig_region.update_layout(title_x=0.5, plot_bgcolor="white")
-st.plotly_chart(fig_region, use_container_width=True, config={"staticPlot": True})
 
-st.subheader("📦 الإيرادات حسب المنتج")
-fig_product = px.pie(
-    filtered_df, names="المنتج", values="الإيرادات", hole=0.3,
-    color_discrete_sequence=color_palette, title="نسبة الإيرادات حسب المنتج"
-)
-fig_product.update_layout(title_x=0.5)
-st.plotly_chart(fig_product, use_container_width=True, config={"staticPlot": True})
+st.plotly_chart(fig_3d_surface, use_container_width=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
-# ================== رسمة جديدة: منتج × منطقة ==================
-st.subheader("📊 مقارنة المنتجات حسب المناطق")
-fig_prod_region = px.bar(
-    filtered_df, x="المنتج", y="الإيرادات", color="المنطقة",
-    barmode="group", color_discrete_sequence=color_palette,
-    title="مبيعات كل منتج موزعة على المناطق"
-)
-fig_prod_region.update_layout(title_x=0.5, plot_bgcolor="white")
-st.plotly_chart(fig_prod_region, use_container_width=True, config={"staticPlot": True})
+# ================== رسوم بيانية متقدمة أخرى ==================
+col1, col2 = st.columns(2)
 
-# ================== رسمة جديدة: منطقة × منتج ==================
-st.subheader("📊 مقارنة المناطق حسب المنتجات")
-fig_region_prod = px.bar(
-    filtered_df, x="المنطقة", y="الإيرادات", color="المنتج",
-    barmode="group", color_discrete_sequence=color_palette,
-    title="مبيعات كل منطقة موزعة على المنتجات"
-)
-fig_region_prod.update_layout(title_x=0.5, plot_bgcolor="white")
-st.plotly_chart(fig_region_prod, use_container_width=True, config={"staticPlot": True})
-
-# ================== عرض الجدول ==================
-st.subheader("📋 البيانات التفصيلية")
-st.dataframe(filtered_df, use_container_width=True)
+with col1:
+    st.markdown('<h2 class="section-header">📊 توزيع الإيرادات حسب المنطقة</h2>', unsafe_allow_html=True)
+    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+    
+    region_data = filtered_df.groupby("المنطقة")["الإيرادات"].sum().reset_index()
+    fig_donut = go.Figure(data=[go.Pie(
+        labels=region_data["المنطقة"], 
+        values=region_data["الإيرادات"],
+        hole=0.6,
+        marker_colors=colors_3d,
+        textinfo='label+percent',
+        textfont=dict(family='Cairo', size=12),
+        hovertemplate='<b>%{label}</b><br>الإيرادات: %{value:,}<br>النسبة: %{percent}<extra></extra>'
+    )])
+    
+    fig_donut.update_layout(
+        title={'text': 'نسبة الإيرادات لكل منطقة', 'x': 0.5, 'font': {'family': 'Cairo'}},
+        font=dict(family='Cairo'),
+        height=400
+    )
+  
