@@ -2,6 +2,11 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+# تخصيص الألوان والأنماط
+PRIMARY_COLOR = "#1E90FF"  # أزرق متوسط
+BACKGROUND_COLOR = "#F0F8FF"  # أزرق فاتح كخلفية
+TEXT_COLOR = "#333333"  # لون نص داكن
+
 @st.cache_data
 def load_data():
     df = pd.read_csv("Dataset.csv")
@@ -22,29 +27,56 @@ def load_data():
 
 df = load_data()
 
+# تهيئة الصفحة مع خلفية مخصصة
 st.set_page_config(
     page_title="لوحة تحليل المبيعات",
     page_icon="📊",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+st.markdown(
+    f"""
+    <style>
+    .stApp {{
+        background-color: {BACKGROUND_COLOR};
+    }}
+    .stHeader {{
+        background-color: {PRIMARY_COLOR};
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+    }}
+    .stMetric > div {{
+        background-color: white;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
 )
 
 st.title("📊 لوحة تحليل المبيعات")
-st.markdown("> منصة تفاعلية لتحليل أداء المنتجات والمناطق خلال فترات زمنية مختلفة")
+st.markdown("> منصة تفاعلية لتحليل أداء المنتجات والمناطق خلال فترات زمنية مختلفة", unsafe_allow_html=True)
 
 st.divider()
 
+# فلاتر بتصميم محسّن
 col1, col2 = st.columns(2)
-
 with col1:
-    product_filter = st.multiselect("اختر المنتج:", df["المنتج"].unique(), default=df["المنتج"].unique())
+    st.markdown('<div class="stHeader">اختر المنتج:</div>', unsafe_allow_html=True)
+    product_filter = st.multiselect("", df["المنتج"].unique(), default=df["المنتج"].unique(), key="product_filter")
 
 with col2:
-    region_filter = st.multiselect("اختر المنطقة:", df["المنطقة"].unique(), default=df["المنطقة"].unique())
+    st.markdown('<div class="stHeader">اختر المنطقة:</div>', unsafe_allow_html=True)
+    region_filter = st.multiselect("", df["المنطقة"].unique(), default=df["المنطقة"].unique(), key="region_filter")
 
 min_date, max_date = df["التاريخ"].min(), df["التاريخ"].max()
 date_col = st.columns(1)
 with date_col[0]:
-    date_filter = st.date_input("الفترة الزمنية:", value=(min_date, max_date), min_value=min_date, max_value=max_date)
+    st.markdown('<div class="stHeader">الفترة الزمنية:</div>', unsafe_allow_html=True)
+    date_filter = st.date_input("", value=(min_date, max_date), min_value=min_date, max_value=max_date, key="date_filter")
 
 filtered_df = df[
     (df["المنتج"].isin(product_filter)) &
@@ -56,6 +88,7 @@ filtered_df = df[
 st.divider()
 
 st.subheader("📌 لمحة سريعة")
+st.caption("نظرة عامة على الأداء الرئيسي بناءً على الفلاتر المختارة")
 
 kpi_row1 = st.columns(3)
 with kpi_row1[0]:
@@ -105,6 +138,7 @@ with kpi_row2[2]:
 
 st.divider()
 st.subheader("📅 مجموع المبيعات حسب اليوم")
+st.caption("اختر يومًا لعرض إجمالي المبيعات له")
 selected_day = st.selectbox(
     "اختر يوم الأسبوع:",
     options=df["يوم_الأسبوع"].unique(),
@@ -124,7 +158,7 @@ fig_time = px.line(
     template='plotly_white'
 )
 fig_time.update_traces(
-    line=dict(width=3),
+    line=dict(width=3, dash="solid"),  # إضافة نمط خط
     hovertemplate="التاريخ: %{x|%Y-%m-%d}<br>الإيرادات: %{y:,.0f}<br>المنتج: %{customdata}",
     customdata=filtered_df["المنتج"]
 )
@@ -138,8 +172,9 @@ fig_time.update_layout(
     xaxis=dict(showgrid=True, gridcolor='lightgray', gridwidth=1),
     legend_title_text="المنتج",
     hovermode="x unified",
-    font=dict(family="Cairo", size=12, color="black"),
-    width=1200
+    font=dict(family="Cairo", size=14, color=TEXT_COLOR),  # زيادة حجم الخط
+    width=1200,
+    height=500  # إضافة ارتفاع محدد
 )
 st.plotly_chart(fig_time, use_container_width=True, config={"staticPlot": True})
 
@@ -157,8 +192,9 @@ fig_product.update_traces(
 fig_product.update_layout(
     title_x=0.5,
     legend_title_text="المنتج",
-    font=dict(family="Cairo", size=12, color="black"),
-    width=1200
+    font=dict(family="Cairo", size=14, color=TEXT_COLOR),
+    width=1200,
+    height=500
 )
 st.plotly_chart(fig_product, use_container_width=True, config={"staticPlot": True})
 
@@ -182,8 +218,9 @@ fig_region.update_layout(
     paper_bgcolor="white",
     yaxis=dict(range=[0, region_data["الإيرادات"].max() * 1.1], showgrid=True, gridcolor='lightgray'),
     showlegend=False,
-    font=dict(family="Cairo", size=12, color="black"),
-    width=1200
+    font=dict(family="Cairo", size=14, color=TEXT_COLOR),
+    width=1200,
+    height=500
 )
 st.plotly_chart(fig_region, use_container_width=True, config={"staticPlot": True})
 
@@ -214,8 +251,9 @@ with tabs[0]:
         paper_bgcolor="white",
         yaxis=dict(range=[0, prod_region_data["الإيرادات"].max() * 1.1], showgrid=True, gridcolor='lightgray'),
         legend_title_text="المنطقة",
-        font=dict(family="Cairo", size=12, color="black"),
-        width=1200
+        font=dict(family="Cairo", size=14, color=TEXT_COLOR),
+        width=1200,
+        height=500
     )
     st.plotly_chart(fig_prod_region, use_container_width=True, config={"staticPlot": True})
 
@@ -241,8 +279,9 @@ with tabs[1]:
         paper_bgcolor="white",
         yaxis=dict(range=[0, region_prod_data["الإيرادات"].max() * 1.1], showgrid=True, gridcolor='lightgray'),
         legend_title_text="المنتج",
-        font=dict(family="Cairo", size=12, color="black"),
-        width=1200
+        font=dict(family="Cairo", size=14, color=TEXT_COLOR),
+        width=1200,
+        height=500
     )
     st.plotly_chart(fig_region_prod, use_container_width=True, config={"staticPlot": True})
 
@@ -268,8 +307,9 @@ with tabs[2]:
         paper_bgcolor="white",
         yaxis=dict(range=[0, prod_day_data["الإيرادات"].max() * 1.1], showgrid=True, gridcolor='lightgray'),
         legend_title_text="يوم الأسبوع",
-        font=dict(family="Cairo", size=12, color="black"),
-        width=1200
+        font=dict(family="Cairo", size=14, color=TEXT_COLOR),
+        width=1200,
+        height=500
     )
     st.plotly_chart(fig_prod_day, use_container_width=True, config={"staticPlot": True})
 
@@ -295,14 +335,16 @@ with tabs[3]:
         paper_bgcolor="white",
         yaxis=dict(range=[0, region_day_data["الإيرادات"].max() * 1.1], showgrid=True, gridcolor='lightgray'),
         legend_title_text="يوم الأسبوع",
-        font=dict(family="Cairo", size=12, color="black"),
-        width=1200
+        font=dict(family="Cairo", size=14, color=TEXT_COLOR),
+        width=1200,
+        height=500
     )
     st.plotly_chart(fig_region_day, use_container_width=True, config={"staticPlot": True})
 
 st.divider()
 
 st.subheader("📋 البيانات التفصيلية")
+st.caption("عرض جميع البيانات المفلترة في جدول تفاعلي")
 st.dataframe(filtered_df, use_container_width=True)
 
 st.download_button(
