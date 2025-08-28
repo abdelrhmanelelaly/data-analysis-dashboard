@@ -141,16 +141,54 @@ st.divider()
 color_palette = px.colors.qualitative.Set2
 
 st.subheader("📈 الإيرادات بمرور الوقت")
-fig_time = px.line(
-    filtered_df, x="التاريخ", y="الإيرادات", color="المنتج", markers=True,
-    color_discrete_sequence=color_palette, title="الإيرادات اليومية حسب المنتج",
-    template='plotly_white'
+
+# إضافة فلتر لاختيار نوع الإيرادات
+revenue_type = st.selectbox(
+    "اختر نوع الإيرادات:",
+    ["الإيرادات الكلية", "إيرادات منتج معين"],
+    key="revenue_type"
 )
-fig_time.update_traces(
-    line=dict(width=3, dash="solid"),  # إضافة نمط خط
-    hovertemplate="التاريخ: %{x|%Y-%m-%d}<br>الإيرادات: %{y:,.0f}<br>المنتج: %{customdata}",
-    customdata=filtered_df["المنتج"]
-)
+
+if revenue_type == "الإيرادات الكلية":
+    # حساب الإيرادات الكلية حسب التاريخ
+    time_data = filtered_df.groupby("التاريخ")["الإيرادات"].sum().reset_index()
+    fig_time = px.line(
+        time_data,
+        x="التاريخ",
+        y="الإيرادات",
+        markers=True,
+        color_discrete_sequence=[PRIMARY_COLOR],  # لون واحد للإيرادات الكلية
+        title="الإيرادات الكلية اليومية",
+        template='plotly_white'
+    )
+    fig_time.update_traces(
+        line=dict(width=3, dash="solid"),
+        hovertemplate="التاريخ: %{x|%Y-%m-%d}<br>الإيرادات: %{y:,.0f}",
+    )
+else:
+    # إضافة فلتر لاختيار المنتج
+    selected_product = st.selectbox(
+        "اختر المنتج:",
+        filtered_df["المنتج"].unique(),
+        key="selected_product_time"
+    )
+    # تصفية البيانات بناءً على المنتج المختار
+    time_data = filtered_df[filtered_df["المنتج"] == selected_product][["التاريخ", "الإيرادات"]]
+    fig_time = px.line(
+        time_data,
+        x="التاريخ",
+        y="الإيرادات",
+        markers=True,
+        color_discrete_sequence=[PRIMARY_COLOR],  # لون واحد للمنتج المختار
+        title=f"إيرادات المنتج {selected_product} اليومية",
+        template='plotly_white'
+    )
+    fig_time.update_traces(
+        line=dict(width=3, dash="solid"),
+        hovertemplate="التاريخ: %{x|%Y-%m-%d}<br>الإيرادات: %{y:,.0f}",
+    )
+
+# إعدادات الرسم البياني
 fig_time.update_layout(
     title_x=0.5,
     xaxis_title="التاريخ",
@@ -161,12 +199,11 @@ fig_time.update_layout(
     xaxis=dict(showgrid=True, gridcolor='lightgray', gridwidth=1),
     legend_title_text="المنتج",
     hovermode="x unified",
-    font=dict(family="Cairo", size=14, color=TEXT_COLOR),  # زيادة حجم الخط
+    font=dict(family="Cairo", size=14, color=TEXT_COLOR),
     width=1800,
-    height=600  # إضافة ارتفاع محدد
+    height=600
 )
 st.plotly_chart(fig_time, use_container_width=True, config={"staticPlot": True})
-
 st.subheader("📦 الإيرادات حسب المنتج")
 fig_product = px.pie(
     filtered_df, names="المنتج", values="الإيرادات", hole=0.3,
