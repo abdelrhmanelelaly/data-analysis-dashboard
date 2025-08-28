@@ -138,6 +138,69 @@ with kpi_row2[2]:
 
 st.divider()
 
+# قسم جديد: تحليل تأثير الأيام على المبيعات
+st.subheader("📊 تحليل تأثير الأيام على المبيعات")
+st.caption("تحليل كيفية تأثير أيام الأسبوع على مبيعات منتج معين في منطقة معينة")
+
+# فلاتر لاختيار المنتج والمنطقة
+col1, col2 = st.columns(2)
+with col1:
+    selected_product = st.selectbox("اختر المنتج:", filtered_df["المنتج"].unique(), key="analysis_product")
+with col2:
+    selected_region = st.selectbox("اختر المنطقة:", filtered_df["المنطقة"].unique(), key="analysis_region")
+
+# تصفية البيانات بناءً على المنتج والمنطقة المختارة
+analysis_df = filtered_df[
+    (filtered_df["المنتج"] == selected_product) &
+    (filtered_df["المنطقة"] == selected_region)
+].groupby("يوم_الأسبوع")["الإيرادات"].sum().reset_index()
+
+# حساب المتوسط واليوم الأعلى والأقل
+if not analysis_df.empty:
+    avg_sales = analysis_df["الإيرادات"].mean()
+    max_day = analysis_df.loc[analysis_df["الإيرادات"].idxmax()]
+    min_day = analysis_df.loc[analysis_df["الإيرادات"].idxmin()]
+    max_percentage = ((max_day["الإيرادات"] - avg_sales) / avg_sales * 100) if avg_sales > 0 else 0
+    min_percentage = ((avg_sales - min_day["الإيرادات"]) / avg_sales * 100) if avg_sales > 0 else 0
+
+    # رسم بياني للمبيعات حسب الأيام
+    fig_analysis = px.bar(
+        analysis_df,
+        x="يوم_الأسبوع",
+        y="الإيرادات",
+        title=f"مبيعات {selected_product} في {selected_region} حسب الأيام",
+        color="يوم_الأسبوع",
+        color_discrete_sequence=px.colors.qualitative.Set3,
+        template='plotly_white'
+    )
+    fig_analysis.update_traces(
+        hovertemplate="اليوم: %{x}<br>الإيرادات: %{y:,.0f}",
+        texttemplate='%{y:,.0f}',
+        textposition='auto'
+    )
+    fig_analysis.update_layout(
+        title_x=0.5,
+        xaxis_title="يوم الأسبوع",
+        yaxis_title="الإيرادات",
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        yaxis=dict(showgrid=True, gridcolor='lightgray', gridwidth=1),
+        showlegend=False,
+        font=dict(family="Cairo", size=14, color=TEXT_COLOR),
+        width=1200,
+        height=500
+    )
+    st.plotly_chart(fig_analysis, use_container_width=True, config={"staticPlot": True})
+
+    # عرض الإحصائيات
+    st.markdown(f"**المتوسط اليومي للمبيعات:** {avg_sales:,.0f}")
+    st.markdown(f"**اليوم الأعلى مبيعًا:** {max_day['يوم_الأسبوع']} ({max_day['الإيرادات']:,.0f}, +{max_percentage:.1f}%)")
+    st.markdown(f"**اليوم الأقل مبيعًا:** {min_day['يوم_الأسبوع']} ({min_day['الإيرادات']:,.0f}, -{min_percentage:.1f}%)")
+else:
+    st.write("لا توجد بيانات كافية للتحليل بناءً على الاختيارات الحالية.")
+
+st.divider()
+
 color_palette = px.colors.qualitative.Set2
 
 st.subheader("📈 الإيرادات بمرور الوقت")
