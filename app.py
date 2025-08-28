@@ -3,10 +3,10 @@ import pandas as pd
 import plotly.express as px
 
 # تخصيص الألوان والأنماط
-PRIMARY_COLOR = "#1E90FF"  # أزرق متوسط
-BACKGROUND_COLOR = "#F0F8FF"  # أزرق فاتح كخلفية
-TEXT_COLOR = "#333333"  # لون نص داكن
-
+PRIMARY_COLOR = "#4A90E2"     # أزرق هادي أكثر، مناسب للأزرار والعناوين
+BACKGROUND_COLOR = "#EAF4FC"  # خلفية فاتحة جداً مريحة للعين
+TEXT_COLOR = "#1F2937"        # نص داكن لكن أقل حدة من الأسود الكامل
+ACCENT_COLOR = "#F5A623"      # لون ثانوي للتأكيد أو الزرار المهمة
 @st.cache_data
 def load_data():
     df = pd.read_csv("Dataset.csv")
