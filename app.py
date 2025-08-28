@@ -76,7 +76,7 @@ fig_time.update_layout(
     xaxis=dict(showgrid=True, gridcolor='lightgray', gridwidth=1),
     legend_title_text="المنتج",
     hovermode="x unified",
-    font=dict(family="Arial", size=12, color="black")
+    font=dict(family="Cairo", size=12, color="black")
 )
 st.plotly_chart(fig_time, use_container_width=True, config={"staticPlot": True})
 
@@ -95,7 +95,7 @@ fig_product.update_traces(
 fig_product.update_layout(
     title_x=0.5,
     legend_title_text="المنتج",
-    font=dict(family="Arial", size=12, color="black")
+    font=dict(family="Cairo", size=12, color="black")
 )
 st.plotly_chart(fig_product, use_container_width=True, config={"staticPlot": True})
 
@@ -119,7 +119,7 @@ fig_region.update_layout(
     paper_bgcolor="white",
     yaxis=dict(range=[0, region_data["الإيرادات"].max() * 1.2], showgrid=True, gridcolor='lightgray'),
     showlegend=False,
-    font=dict(family="Arial", size=12, color="black")
+    font=dict(family="Cairo", size=12, color="black")
 )
 st.plotly_chart(fig_region, use_container_width=True, config={"staticPlot": True})
 
@@ -148,7 +148,7 @@ with tab1:
         paper_bgcolor="white",
         yaxis=dict(range=[0, prod_region_data["الإيرادات"].max() * 1.2], showgrid=True, gridcolor='lightgray'),
         legend_title_text="المنطقة",
-        font=dict(family="Arial", size=12, color="black")
+        font=dict(family="Cairo", size=12, color="black")
     )
     st.plotly_chart(fig_prod_region, use_container_width=True, config={"staticPlot": True})
 
@@ -173,7 +173,7 @@ with tab2:
         paper_bgcolor="white",
         yaxis=dict(range=[0, region_prod_data["الإيرادات"].max() * 1.2], showgrid=True, gridcolor='lightgray'),
         legend_title_text="المنتج",
-        font=dict(family="Arial", size=12, color="black")
+        font=dict(family="Cairo", size=12, color="black")
     )
     st.plotly_chart(fig_region_prod, use_container_width=True, config={"staticPlot": True})
 
