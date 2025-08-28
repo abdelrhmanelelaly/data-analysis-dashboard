@@ -100,6 +100,17 @@ fig_region_prod = px.bar(
 fig_region_prod.update_layout(title_x=0.5, plot_bgcolor="white")
 st.plotly_chart(fig_region_prod, use_container_width=True, config={"staticPlot": True})
 
+# ================== رسمة جديدة: نسبة الإيرادات لكل منطقة ==================
+st.subheader("📊 نسبة الإيرادات حسب المنطقة")
+region_percentage = filtered_df.groupby("المنطقة")["الإيرادات"].sum().reset_index()
+fig_region_pie = px.pie(
+    region_percentage, names="المنطقة", values="الإيرادات",
+    hole=0.3, color_discrete_sequence=color_palette,
+    title="نسبة الإيرادات لكل منطقة"
+)
+fig_region_pie.update_layout(title_x=0.5)
+st.plotly_chart(fig_region_pie, use_container_width=True, config={"staticPlot": True})
+
 # ================== عرض الجدول ==================
 st.subheader("📋 البيانات التفصيلية")
 st.dataframe(filtered_df, use_container_width=True)
