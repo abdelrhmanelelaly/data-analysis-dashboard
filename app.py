@@ -137,17 +137,6 @@ with kpi_row2[2]:
         st.metric("المنطقة الأقل مبيعًا", "-")
 
 st.divider()
-st.subheader("📅 مجموع المبيعات حسب اليوم")
-st.caption("اختر يومًا لعرض إجمالي المبيعات له")
-selected_day = st.selectbox(
-    "اختر يوم الأسبوع:",
-    options=df["يوم_الأسبوع"].unique(),
-    index=0
-)
-day_sales = filtered_df[filtered_df["يوم_الأسبوع"] == selected_day]["الإيرادات"].sum()
-st.metric("مجموع المبيعات في اليوم", f"{day_sales:,.0f}")
-
-st.divider()
 
 color_palette = px.colors.qualitative.Set2
 
