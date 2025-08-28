@@ -103,7 +103,6 @@ with kpi_row2[2]:
     else:
         st.metric("المنطقة الأقل مبيعًا", "-")
 
-# New section for total sales by selected day
 st.divider()
 st.subheader("📅 مجموع المبيعات حسب اليوم")
 selected_day = st.selectbox(
@@ -136,7 +135,7 @@ fig_time.update_layout(
     plot_bgcolor="white",
     paper_bgcolor="white",
     yaxis=dict(showgrid=True, gridcolor='lightgray', gridwidth=1, zeroline=True, zerolinecolor="gray"),
-ónde    xaxis=dict(showgrid=True, gridcolor='lightgray', gridwidth=1),
+    xaxis=dict(showgrid=True, gridcolor='lightgray', gridwidth=1),
     legend_title_text="المنتج",
     hovermode="x unified",
     font=dict(family="Cairo", size=12, color="black"),
@@ -226,7 +225,7 @@ with tabs[1]:
         region_prod_data, x="المنطقة", y="الإيرادات", color="المنتج",
         barmode="group", color_discrete_sequence=color_palette,
         title="مبيعات كل منطقة موزعة على المنتجات",
-        template='plotly_white'  # Fixed typo
+        template='plotly_white'
     )
     fig_region_prod.update_traces(
         hovertemplate="المنطقة: %{x}<br>المنتج: %{customdata}<br>الإيرادات: %{y:,.0f}",
