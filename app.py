@@ -3,10 +3,10 @@ import pandas as pd
 import plotly.express as px
 
 # تخصيص الألوان والأنماط
-PRIMARY_COLOR = "#4A90E2"     # أزرق هادي أكثر، مناسب للأزرار والعناوين
-BACKGROUND_COLOR = "#EAF4FC"  # خلفية فاتحة جداً مريحة للعين
-TEXT_COLOR = "#1F2937"        # نص داكن لكن أقل حدة من الأسود الكامل
-ACCENT_COLOR = "#F5A623"      # لون ثانوي للتأكيد أو الزرار المهمة
+PRIMARY_COLOR = "#1E90FF"  # أزرق متوسط
+BACKGROUND_COLOR = "#F0F8FF"  # أزرق فاتح كخلفية
+TEXT_COLOR = "#333333"  # لون نص داكن
+
 @st.cache_data
 def load_data():
     df = pd.read_csv("Dataset.csv")
@@ -189,6 +189,7 @@ st.plotly_chart(fig_product, use_container_width=True, config={"staticPlot": Tru
 
 st.subheader("🏙️ الإيرادات حسب المنطقة")
 region_data = filtered_df.groupby("المنطقة")["الإيرادات"].sum().reset_index()
+region_data = region_data.sort_values(by="الإيرادات")  # ترتيب من الصغير إلى الكبير
 fig_region = px.bar(
     region_data, x="المنطقة", y="الإيرادات", color="المنطقة",
     color_discrete_sequence=color_palette, title="إجمالي الإيرادات لكل منطقة",
@@ -219,7 +220,7 @@ st.subheader("📊 مقارنات تفصيلية")
 tabs = st.tabs(["مقارنة المنتجات حسب المناطق", "مقارنة المناطق حسب المنتجات", "مقارنة المنتجات حسب الأيام", "مقارنة المناطق حسب الأيام"])
 
 with tabs[0]:
-    prod_region_data = filtered_df.groupby(["المنتج","المنطقة"])["الإيرادات"].sum().reset_index()
+    prod_region_data = filtered_df.groupby(["المنتج", "المنطقة"])["الإيرادات"].sum().reset_index()
     fig_prod_region = px.bar(
         prod_region_data, x="المنتج", y="الإيرادات", color="المنطقة",
         barmode="group", color_discrete_sequence=color_palette,
@@ -247,7 +248,8 @@ with tabs[0]:
     st.plotly_chart(fig_prod_region, use_container_width=True, config={"staticPlot": True})
 
 with tabs[1]:
-    region_prod_data = filtered_df.groupby(["المنطقة","المنتج"])["الإيرادات"].sum().reset_index()
+    region_prod_data = filtered_df.groupby(["المنطقة", "المنتج"])["الإيرادات"].sum().reset_index()
+    region_prod_data = region_prod_data.sort_values(by="الإيرادات")  # ترتيب من الصغير إلى الكبير
     fig_region_prod = px.bar(
         region_prod_data, x="المنطقة", y="الإيرادات", color="المنتج",
         barmode="group", color_discrete_sequence=color_palette,
@@ -275,7 +277,11 @@ with tabs[1]:
     st.plotly_chart(fig_region_prod, use_container_width=True, config={"staticPlot": True})
 
 with tabs[2]:
-    prod_day_data = filtered_df.groupby(["المنتج","يوم_الأسبوع"])["الإيرادات"].sum().reset_index()
+    prod_day_data = filtered_df.groupby(["المنتج", "يوم_الأسبوع"])["الإيرادات"].sum().reset_index()
+    # ترتيب الأيام حسب ترتيب الأسبوع
+    day_order = ['الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+    prod_day_data['يوم_الأسبوع'] = pd.Categorical(prod_day_data['يوم_الأسبوع'], categories=day_order, ordered=True)
+    prod_day_data = prod_day_data.sort_values(by=["المنتج", "يوم_الأسبوع"])
     fig_prod_day = px.bar(
         prod_day_data, x="المنتج", y="الإيرادات", color="يوم_الأسبوع",
         barmode="group", color_discrete_sequence=color_palette,
@@ -303,7 +309,10 @@ with tabs[2]:
     st.plotly_chart(fig_prod_day, use_container_width=True, config={"staticPlot": True})
 
 with tabs[3]:
-    region_day_data = filtered_df.groupby(["المنطقة","يوم_الأسبوع"])["الإيرادات"].sum().reset_index()
+    region_day_data = filtered_df.groupby(["المنطقة", "يوم_الأسبوع"])["الإيرادات"].sum().reset_index()
+    # ترتيب الأيام حسب ترتيب الأسبوع
+    region_day_data['يوم_الأسبوع'] = pd.Categorical(region_day_data['يوم_الأسبوع'], categories=day_order, ordered=True)
+    region_day_data = region_day_data.sort_values(by=["المنطقة", "يوم_الأسبوع"])
     fig_region_day = px.bar(
         region_day_data, x="المنطقة", y="الإيرادات", color="يوم_الأسبوع",
         barmode="group", color_discrete_sequence=color_palette,
@@ -332,7 +341,7 @@ with tabs[3]:
 
 st.divider()
 
-# قسم جديد: تحليل تأثير الأيام على المبيعات (أسفل كل الأقسام وفوق البيانات التفصيلية)
+# قسم جديد: تحليل تأثير الأيام على المبيعات
 st.subheader("📊 تحليل تأثير الأيام على المبيعات")
 st.caption("تحليل كيفية تأثير أيام الأسبوع على مبيعات منتج معين في منطقة معينة")
 
@@ -348,6 +357,10 @@ analysis_df = filtered_df[
     (filtered_df["المنتج"] == selected_product) &
     (filtered_df["المنطقة"] == selected_region)
 ].groupby("يوم_الأسبوع")["الإيرادات"].sum().reset_index()
+
+# ترتيب الأيام حسب ترتيب الأسبوع
+analysis_df['يوم_الأسبوع'] = pd.Categorical(analysis_df['يوم_الأسبوع'], categories=day_order, ordered=True)
+analysis_df = analysis_df.sort_values(by="يوم_الأسبوع")
 
 # حساب المتوسط واليوم الأعلى والأقل
 if not analysis_df.empty:
