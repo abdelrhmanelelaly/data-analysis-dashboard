@@ -53,20 +53,24 @@ with kpi_row1[0]:
 with kpi_row1[1]:  
     st.metric("متوسط الإيرادات", f"{filtered_df['الإيرادات'].mean():,.0f}")  
 with kpi_row1[2]:  
-    st.metric("عدد المنتجات", filtered_df['المنتج'].nunique())  
-
-kpi_row2 = st.columns(3)  
-with kpi_row2[0]:  
-    st.metric("عدد المناطق", filtered_df['المنطقة'].nunique())  
-with kpi_row2[1]:  
     top_product_series = filtered_df.groupby("المنتج")["الإيرادات"].sum()  
     if not top_product_series.empty:  
         top_prod_name = top_product_series.idxmax()  
         top_prod_value = top_product_series.max()  
-        st.metric("المنتج الأعلى إيرادًا", f"{top_prod_name} ({top_prod_value:,.0f})")  
+        st.metric("المنتج الأعلى مبيعًا", f"{top_prod_name} ({top_prod_value:,.0f})")  
     else:  
-        st.metric("المنتج الأعلى إيرادًا", "-")  
-with kpi_row2[2]:  
+        st.metric("المنتج الأعلى مبيعًا", "-")  
+
+kpi_row2 = st.columns(3)  
+with kpi_row2[0]:  
+    low_product_series = filtered_df.groupby("المنتج")["الإيرادات"].sum()  
+    if not low_product_series.empty:  
+        low_prod_name = low_product_series.idxmin()  
+        low_prod_value = low_product_series.min()  
+        st.metric("المنتج الأقل مبيعًا", f"{low_prod_name} ({low_prod_value:,.0f})")  
+    else:  
+        st.metric("المنتج الأقل مبيعًا", "-")  
+with kpi_row2[1]:  
     top_region_series = filtered_df.groupby("المنطقة")["الإيرادات"].sum()  
     if not top_region_series.empty:  
         top_region_name = top_region_series.idxmax()  
@@ -74,6 +78,14 @@ with kpi_row2[2]:
         st.metric("المنطقة الأعلى إيرادًا", f"{top_region_name} ({top_region_value:,.0f})")  
     else:  
         st.metric("المنطقة الأعلى إيرادًا", "-")  
+with kpi_row2[2]:  
+    low_region_series = filtered_df.groupby("المنطقة")["الإيرادات"].sum()  
+    if not low_region_series.empty:  
+        low_region_name = low_region_series.idxmin()  
+        low_region_value = low_region_series.min()  
+        st.metric("المنطقة الأقل مبيعًا", f"{low_region_name} ({low_region_value:,.0f})")  
+    else:  
+        st.metric("المنطقة الأقل مبيعًا", "-")  
 
 st.divider()  
 
@@ -131,7 +143,7 @@ fig_region = px.bar(
 )  
 fig_region.update_traces(  
     hovertemplate="المنطقة: %{x}<br>الإيرادات: %{y:,.0f}",  
-    texttemplate='%{y:,.0f}',  # إضافة الأرقام على الأعمدة
+    texttemplate='%{y:,.0f}',  
     textposition='auto'  
 )  
 fig_region.update_layout(  
@@ -162,7 +174,7 @@ with tab1:
     fig_prod_region.update_traces(  
         hovertemplate="المنتج: %{x}<br>المنطقة: %{customdata}<br>الإيرادات: %{y:,.0f}",  
         customdata=prod_region_data["المنطقة"],  
-        texttemplate='%{y:,.0f}',  # إضافة الأرقام على الأعمدة
+        texttemplate='%{y:,.0f}',  
         textposition='auto'  
     )  
     fig_prod_region.update_layout(  
@@ -188,7 +200,7 @@ with tab2:
     fig_region_prod.update_traces(  
         hovertemplate="المنطقة: %{x}<br>المنتج: %{customdata}<br>الإيرادات: %{y:,.0f}",  
         customdata=region_prod_data["المنتج"],  
-        texttemplate='%{y:,.0f}',  # إضافة الأرقام على الأعمدة
+        texttemplate='%{y:,.0f}',  
         textposition='auto'  
     )  
     fig_region_prod.update_layout(  
