@@ -54,78 +54,128 @@ with kpi4:
 # ================== الرسوم البيانية ==================
 color_palette = px.colors.qualitative.Set2
 
+# 1. الإيرادات بمرور الوقت
 st.subheader("📈 الإيرادات بمرور الوقت")
 fig_time = px.line(
     filtered_df, x="التاريخ", y="الإيرادات", color="المنتج", markers=True,
-    color_discrete_sequence=color_palette, title="الإيرادات اليومية حسب المنتج"
+    color_discrete_sequence=color_palette, title="الإيرادات اليومية حسب المنتج",
+    template='plotly_white'
 )
-fig_time.update_traces(line=dict(width=3))
-fig_time.update_layout(title_x=0.5, plot_bgcolor="white")
-st.plotly_chart(fig_time, use_container_width=True, config={"staticPlot": True})
+fig_time.update_traces(
+    line=dict(width=3),
+    hovertemplate="التاريخ: %{x|%Y-%m-%d}<br>الإيرادات: %{y:,.0f}<br>المنتج: %{customdata}",
+    customdata=filtered_df["المنتج"]
+)
+fig_time.update_layout(
+    title_x=0.5,
+    xaxis_title="التاريخ",
+    yaxis_title="الإيرادات",
+    plot_bgcolor="white",
+    paper_bgcolor="white",
+    yaxis=dict(showgrid=True, gridcolor='lightgray', gridwidth=1),
+    xaxis=dict(showgrid=True, gridcolor='lightgray', gridwidth=1),
+    legend_title_text="المنتج",
+    hovermode="x unified",
+    font=dict(family="Arial", size=12, color="black")
+)
+st.plotly_chart(fig_time, use_container_width=True)
 
-# ================== الإيرادات حسب المنطقة بدون أرقام فوق الأعمدة ==================
+# 2. الإيرادات حسب المنتج
+st.subheader("📦 الإيرادات حسب المنتج")
+fig_product = px.pie(
+    filtered_df, names="المنتج", values="الإيرادات", hole=0.3,
+    color_discrete_sequence=color_palette, title="نسبة الإيرادات حسب المنتج",
+    template='plotly_white'
+)
+fig_product.update_traces(
+    hovertemplate="المنتج: %{label}<br>الإيرادات: %{value:,.0f}<br>النسبة: %{percent}",
+    pull=[0.05] * len(filtered_df['المنتج'].unique()),
+    textinfo='percent+label'
+)
+fig_product.update_layout(
+    title_x=0.5,
+    legend_title_text="المنتج",
+    font=dict(family="Arial", size=12, color="black")
+)
+st.plotly_chart(fig_product, use_container_width=True)
+
+# 3. الإيرادات حسب المنطقة
 st.subheader("🏙️ الإيرادات حسب المنطقة")
 region_data = filtered_df.groupby("المنطقة")["الإيرادات"].sum().reset_index()
 fig_region = px.bar(
     region_data, x="المنطقة", y="الإيرادات", color="المنطقة",
-    color_discrete_sequence=color_palette, title="إجمالي الإيرادات لكل منطقة"
+    color_discrete_sequence=color_palette, title="إجمالي الإيرادات لكل منطقة",
+    template='plotly_white'
+)
+fig_region.update_traces(
+    hovertemplate="المنطقة: %{x}<br>الإيرادات: %{y:,.0f}",
+    textposition='none'
 )
 fig_region.update_layout(
     title_x=0.5,
+    xaxis_title="المنطقة",
+    yaxis_title="الإيرادات",
     plot_bgcolor="white",
-    yaxis=dict(range=[0, region_data["الإيرادات"].max() * 1.2])
+    paper_bgcolor="white",
+    yaxis=dict(range=[0, region_data["الإيرادات"].max() * 1.2], showgrid=True, gridcolor='lightgray'),
+    showlegend=False,
+    font=dict(family="Arial", size=12, color="black")
 )
-st.plotly_chart(fig_region, use_container_width=True, config={"staticPlot": True})
+st.plotly_chart(fig_region, use_container_width=True)
 
-# ================== الإيرادات حسب المنتج ==================
-st.subheader("📦 الإيرادات حسب المنتج")
-fig_product = px.pie(
-    filtered_df, names="المنتج", values="الإيرادات", hole=0.3,
-    color_discrete_sequence=color_palette, title="نسبة الإيرادات حسب المنتج"
-)
-fig_product.update_layout(title_x=0.5)
-st.plotly_chart(fig_product, use_container_width=True, config={"staticPlot": True})
+# 4 & 5. مقارنات المنتجات والمناطق في علامتي تبويب
+st.subheader("📊 مقارنات تفصيلية")
+tab1, tab2 = st.tabs(["مقارنة المنتجات حسب المناطق", "مقارنة المناطق حسب المنتجات"])
 
-# ================== مقارنة المنتجات حسب المناطق بدون أرقام فوق الأعمدة ==================
-st.subheader("📊 مقارنة المنتجات حسب المناطق")
-prod_region_data = filtered_df.groupby(["المنتج","المنطقة"])["الإيرادات"].sum().reset_index()
-fig_prod_region = px.bar(
-    prod_region_data, x="المنتج", y="الإيرادات", color="المنطقة",
-    barmode="group", color_discrete_sequence=color_palette,
-    title="مبيعات كل منتج موزعة على المناطق"
-)
-fig_prod_region.update_layout(
-    title_x=0.5,
-    plot_bgcolor="white",
-    yaxis=dict(range=[0, prod_region_data["الإيرادات"].max() * 1.2])
-)
-st.plotly_chart(fig_prod_region, use_container_width=True, config={"staticPlot": True})
+with tab1:
+    prod_region_data = filtered_df.groupby(["المنتج","المنطقة"])["الإيرادات"].sum().reset_index()
+    fig_prod_region = px.bar(
+        prod_region_data, x="المنتج", y="الإيرادات", color="المنطقة",
+        barmode="group", color_discrete_sequence=color_palette,
+        title="مبيعات كل منتج موزعة على المناطق",
+        template='plotly_white'
+    )
+    fig_prod_region.update_traces(
+        hovertemplate="المنتج: %{x}<br>المنطقة: %{customdata}<br>الإيرادات: %{y:,.0f}",
+        customdata=prod_region_data["المنطقة"],
+        textposition='none'
+    )
+    fig_prod_region.update_layout(
+        title_x=0.5,
+        xaxis_title="المنتج",
+        yaxis_title="الإيرادات",
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        yaxis=dict(range=[0, prod_region_data["الإيرادات"].max() * 1.2], showgrid=True, gridcolor='lightgray'),
+        legend_title_text="المنطقة",
+        font=dict(family="Arial", size=12, color="black")
+    )
+    st.plotly_chart(fig_prod_region, use_container_width=True)
 
-# ================== مقارنة المناطق حسب المنتجات بدون أرقام فوق الأعمدة ==================
-st.subheader("📊 مقارنة المناطق حسب المنتجات")
-region_prod_data = filtered_df.groupby(["المنطقة","المنتج"])["الإيرادات"].sum().reset_index()
-fig_region_prod = px.bar(
-    region_prod_data, x="المنطقة", y="الإيرادات", color="المنتج",
-    barmode="group", color_discrete_sequence=color_palette,
-    title="مبيعات كل منطقة موزعة على المنتجات"
-)
-fig_region_prod.update_layout(
-    title_x=0.5,
-    plot_bgcolor="white",
-    yaxis=dict(range=[0, region_prod_data["الإيرادات"].max() * 1.2])
-)
-st.plotly_chart(fig_region_prod, use_container_width=True, config={"staticPlot": True})
-
-# ================== نسبة الإيرادات لكل منطقة ==================
-st.subheader("📊 نسبة الإيرادات حسب المنطقة")
-region_percentage = filtered_df.groupby("المنطقة")["الإيرادات"].sum().reset_index()
-fig_region_pie = px.pie(
-    region_percentage, names="المنطقة", values="الإيرادات",
-    hole=0.3, color_discrete_sequence=color_palette,
-    title="نسبة الإيرادات لكل منطقة"
-)
-fig_region_pie.update_layout(title_x=0.5)
-st.plotly_chart(fig_region_pie, use_container_width=True, config={"staticPlot": True})
+with tab2:
+    region_prod_data = filtered_df.groupby(["المنطقة","المنتج"])["الإيرادات"].sum().reset_index()
+    fig_region_prod = px.bar(
+        region_prod_data, x="المنطقة", y="الإيرادات", color="المنتج",
+        barmode="group", color_discrete_sequence=color_palette,
+        title="مبيعات كل منطقة موزعة على المنتجات",
+        template='plotly_white'
+    )
+    fig_region_prod.update_traces(
+        hovertemplate="المنطقة: %{x}<br>المنتج: %{customdata}<br>الإيرادات: %{y:,.0f}",
+        customdata=region_prod_data["المنتج"],
+        textposition='none'
+    )
+    fig_region_prod.update_layout(
+        title_x=0.5,
+        xaxis_title="المنطقة",
+        yaxis_title="الإيرادات",
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        yaxis=dict(range=[0, region_prod_data["الإيرادات"].max() * 1.2], showgrid=True, gridcolor='lightgray'),
+        legend_title_text="المنتج",
+        font=dict(family="Arial", size=12, color="black")
+    )
+    st.plotly_chart(fig_region_prod, use_container_width=True)
 
 # ================== عرض الجدول ==================
 st.subheader("📋 البيانات التفصيلية")
